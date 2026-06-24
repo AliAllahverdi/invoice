@@ -1,19 +1,19 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="az">
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>Invoice</title>
+<title>Hesab</title>
 <style>
   :root{
-    --ink:#1a1a1a; --muted:#6b7280; --line:#e5e7eb; --head:#111827;
-    --accent:#111827; --paper:#ffffff; --pagew:210mm; --brand:#5b3fd9;
+    --ink:#1a1a1a; --muted:#555; --line:#bbb; --head:#111827;
+    --paper:#ffffff; --pagew:210mm; --brand:#1f8a8a;
   }
   *{box-sizing:border-box;}
   body{
-    margin:0; background:#f3f4f6; color:var(--ink);
-    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
-    font-size:13px; line-height:1.45;
+    margin:0; background:#e9ebee; color:var(--ink);
+    font-family:"Times New Roman", Times, Georgia, serif;
+    font-size:14px; line-height:1.5;
   }
 
   /* ---------- Toolbar (screen only) ---------- */
@@ -21,6 +21,7 @@
     position:sticky; top:0; z-index:10;
     display:flex; align-items:center; gap:12px; flex-wrap:wrap;
     padding:10px 16px; background:#111827; color:#fff;
+    font-family:Arial, sans-serif;
   }
   .toolbar label{font-size:12px; color:#9ca3af;}
   .toolbar select{
@@ -41,74 +42,52 @@
     padding:18mm 16mm; box-shadow:0 1px 6px rgba(0,0,0,.15);
   }
 
-  /* ---------- Header ---------- */
-  .head{display:flex; justify-content:space-between; align-items:flex-start; gap:24px;}
-  .brand{display:flex; align-items:center; gap:14px;}
-  .brand img{width:54px; height:54px; object-fit:contain;}
-  .brand .name{font-size:20px; font-weight:700; color:var(--brand);}
-  .brand .person{font-size:12px; color:var(--muted);}
-  .doc h1{margin:0; font-size:26px; letter-spacing:1px; text-align:right; color:var(--head);}
-  .doc .num{text-align:right; color:var(--muted); margin-top:2px;}
-  .badge{
-    display:inline-block; margin-top:8px; padding:3px 10px; border-radius:999px;
-    font-size:11px; font-weight:700; text-transform:uppercase; letter-spacing:.5px;
+  /* ---------- Logo ---------- */
+  .logo-wrap{margin-bottom:22px;}
+  .logo-wrap img{max-height:70px; max-width:320px; object-fit:contain;}
+  .logo-fallback{
+    font-size:26px; font-weight:700; color:var(--brand);
+    font-style:italic; letter-spacing:.5px;
   }
-  .badge.paid{background:#dcfce7; color:#166534;}
-  .badge.unpaid{background:#fee2e2; color:#991b1b;}
-  .badge.other{background:#e5e7eb; color:#374151;}
 
-  /* ---------- Meta blocks ---------- */
-  .meta{display:flex; justify-content:space-between; gap:32px; margin-top:26px;}
-  .meta .col{flex:1;}
-  .meta h3{
-    margin:0 0 8px; font-size:11px; text-transform:uppercase;
-    letter-spacing:.6px; color:var(--muted); font-weight:700;
-  }
-  .kv{display:flex; gap:8px; margin:3px 0;}
-  .kv .k{color:var(--muted); min-width:120px;}
-  .kv .v{font-weight:500;}
-  .billto .who{font-size:15px; font-weight:700; margin-bottom:2px;}
+  /* ---------- Sender / meta lines ---------- */
+  .row{display:flex; gap:16px; margin:10px 0;}
+  .row .lbl{min-width:170px; font-weight:700;}
+  .center-block{text-align:center; font-weight:700; line-height:1.4;}
+  .block{margin:10px 0;}
+  .block b{font-weight:700;}
 
-  /* ---------- Line items ---------- */
-  table.items{width:100%; border-collapse:collapse; margin-top:28px; font-size:12.5px;}
+  .title{text-align:center; margin:26px 0 4px; font-size:20px; font-weight:700;}
+  .subtitle{text-align:center; font-size:16px; font-weight:700; margin-bottom:18px;}
+  .contract{font-weight:700; margin:14px 0 6px;}
+
+  /* ---------- Line items (dark header kept, full borders added) ---------- */
+  table.items{width:100%; border-collapse:collapse; margin-top:14px; font-size:13px;}
   table.items thead th{
     background:var(--head); color:#fff; text-align:left; padding:9px 10px;
     font-weight:600; font-size:11.5px; text-transform:uppercase; letter-spacing:.4px;
+    border:1px solid #2b3447;
   }
-  table.items tbody td{padding:9px 10px; border-bottom:1px solid var(--line);}
+  table.items tbody td{padding:8px 10px; border:1px solid var(--line);}
   table.items .num{text-align:right; white-space:nowrap;}
   table.items tbody tr:nth-child(even){background:#fafafa;}
 
-  /* ---------- Totals ---------- */
-  .totals{display:flex; justify-content:flex-end; margin-top:18px;}
-  .totals table{border-collapse:collapse; min-width:280px;}
-  .totals td{padding:6px 10px;}
-  .totals td.k{color:var(--muted); text-align:right;}
-  .totals td.v{text-align:right; font-weight:600; white-space:nowrap;}
-  .totals tr.grand td{
-    border-top:2px solid var(--head); font-size:16px; padding-top:10px;
-  }
-  .totals tr.grand td.v{font-weight:800;}
+  /* ---------- Totals (AZ style) ---------- */
+  .totals{display:flex; justify-content:flex-end; margin-top:14px;}
+  .totals table{border-collapse:collapse; min-width:300px;}
+  .totals td{padding:4px 8px;}
+  .totals td.k{text-align:right; font-weight:700;}
+  .totals td.v{text-align:right; font-weight:700; white-space:nowrap;}
+  .totals tr.grand td{font-size:16px; padding-top:8px;}
 
-  /* ---------- Comments / signature ---------- */
-  .bottom{display:flex; justify-content:space-between; gap:32px; margin-top:32px;}
-  .bottom .col{flex:1;}
-  .bottom h3{
-    margin:0 0 8px; font-size:11px; text-transform:uppercase;
-    letter-spacing:.6px; color:var(--brand); font-weight:700;
-  }
-  .bottom p{margin:0; color:#374151; white-space:pre-wrap;}
-  .sig-box{
-    margin-top:4px; min-height:80px; border:1px solid var(--line);
-    border-radius:8px; background:#f7f5fc;
-  }
+  .summary{margin-top:16px; font-weight:700;}
+  .summary .words{font-weight:700; margin-top:2px;}
 
-  /* ---------- Terms ---------- */
-  .terms{margin-top:34px; padding-top:14px; border-top:1px solid var(--line);}
-  .terms h3{margin:0 0 6px; font-size:11px; text-transform:uppercase; letter-spacing:.6px; color:var(--muted);}
-  .terms p{margin:0; color:#374151; white-space:pre-wrap;}
+  /* ---------- Signature ---------- */
+  .sign{margin-top:40px; padding-top:14px; border-top:1px solid #333;
+        display:flex; justify-content:space-between; font-weight:700;}
 
-  .empty{padding:60px; text-align:center; color:var(--muted);}
+  .empty{padding:60px; text-align:center; color:var(--muted); font-family:Arial,sans-serif;}
 
   /* ---------- Print ---------- */
   @page{ size:A4; margin:12mm; }
@@ -117,32 +96,31 @@
     .toolbar{display:none !important;}
     .sheet{padding:0;}
     .page{width:auto; box-shadow:none; padding:0;}
-    table.items thead{display:table-header-group;}   /* repeat header on each page */
+    table.items thead{display:table-header-group;}
     table.items tr{break-inside:avoid;}
-    .totals,.terms{break-inside:avoid;}
+    .totals,.summary,.sign{break-inside:avoid;}
   }
 </style>
 </head>
 <body>
 
   <div class="toolbar">
-    <label for="invSel">Invoice</label>
+    <label for="invSel">Hesab</label>
     <select id="invSel"></select>
-    <button id="printBtn">Print / Save PDF</button>
-    <span class="status" id="status">Loading…</span>
+    <button id="printBtn">Çap / PDF</button>
+    <span class="status" id="status">Yüklənir…</span>
   </div>
 
   <div class="sheet">
     <div class="page" id="page">
-      <div class="empty">Select an invoice…</div>
+      <div class="empty">Hesab seçin…</div>
     </div>
   </div>
 
 <script>
 /* ============================================================
-   CONFIG  —  ⚠️ replace TOKEN with a READ-ONLY Airtable token.
-   This file holds the token client-side; keep it internal,
-   do not publish/commit it. Scope: data.records:read on this base.
+   CONFIG  —  TOKEN client-side saxlanılır, yalnız READ-ONLY
+   token istifadə edin (scope: data.records:read). Publik commit etməyin.
    ============================================================ */
 const CONFIG = {
   TOKEN: "patBXfNSVLkFxR8Wo.40a7cde49a65ebe3b81a51ac7acdf4e1990834bb5856ccb8ac7e9969d7c6d112",
@@ -151,11 +129,23 @@ const CONFIG = {
   T_CAMPAIGNS:"tbl8EromseyPeHgL6",
   T_CLIENTS:  "tblmSmQm9EOvhThoO",
   T_COMPANY:  "tblqR2FsfeuX6S8t5",
-  DOC_TITLE:  "INVOICE",         // header word; change to "QUOTE" if preferred
-  CURRENCY:   "AZN",             // line-item / totals currency label
-  BRAND_COLOR:"#5b3fd9"          // company-name accent color — change freely
+  CURRENCY:   "AZN"
 };
-document.documentElement.style.setProperty("--brand", CONFIG.BRAND_COLOR);
+
+/* ============================================================
+   STATİK GÖNDƏRƏN MƏLUMATLARI  (hələ dinamik deyil — buradan dəyişin)
+   LOGO:  logo.png faylını invoice.html ilə eyni qovluğa (repo-ya) qoyun,
+          aşağıda LOGO = "logo.png" qalsın. Şəkil avtomatik görünəcək.
+   ============================================================ */
+const SENDER = {
+  LOGO: "logo.png",
+  name: '"Nyu Media.az" MMC',
+  voen: "1301997231",
+  address: "AZ 1003, Bakı ş., Səbail r-nu, Neftçi Qurban Abbasov 43, Bayil Bay Plaza",
+  bankReqs: 'KapitalBank ASC, Port Baku filialı , VÖEN: 9900003611, H/H: AZ90AIIB40060019440435186107, M/H: AZ37NABZ01350100000000001944 , Kod: 201973, SWIFT: AIIBAZ2XXXX',
+  contractLine: "20 Fevral, 2025 tarixli, AZRC/2025/19 nömrəli müqaviləyə əsasən",
+  director: "Sadıq Zadə Elxan Urmuz oğlu"
+};
 
 const API = `https://api.airtable.com/v0/${CONFIG.BASE}`;
 const H = { Authorization:`Bearer ${CONFIG.TOKEN}` };
@@ -167,7 +157,6 @@ async function apiGet(path){
   if(!r.ok) throw new Error(`${r.status} ${await r.text()}`);
   return r.json();
 }
-// fetch every record of a table (handles pagination)
 async function fetchAll(tableId){
   let out=[], offset;
   do{
@@ -178,97 +167,113 @@ async function fetchAll(tableId){
   } while(offset);
   return out;
 }
-const byId = recs => Object.fromEntries(recs.map(r=>[r.id, r.fields]));
-
-function fmtDate(s){
-  if(!s) return "—";
-  const d = new Date(s);
-  return isNaN(d) ? s : d.toLocaleDateString("en-GB",{day:"2-digit",month:"short",year:"numeric"});
-}
-function money(n){
-  const v = Number(n||0);
-  return v.toLocaleString("en-US",{minimumFractionDigits:2,maximumFractionDigits:2});
-}
-function esc(s){ return String(s??"").replace(/[&<>]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;"}[c])); }
-function first(v){ return Array.isArray(v) ? v[0] : v; }
-
-let CAMPAIGNS = {}, CLIENTS = {}, COMPANIES = {};
-
 async function fetchAllLabeled(label, tableId){
-  try{
-    return await fetchAll(tableId);
-  }catch(err){
-    throw new Error(`[${label}] ${err.message}`);
-  }
+  try{ return await fetchAll(tableId); }
+  catch(err){ throw new Error(`[${label}] ${err.message}`); }
 }
+const byId = recs => Object.fromEntries(recs.map(r=>[r.id, r.fields]));
+const first = v => Array.isArray(v) ? v[0] : v;
+const esc = s => String(s??"").replace(/[&<>]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;"}[c]));
+
+/* ---------- AZ formatlama ---------- */
+const AZ_MONTHS=["Yanvar","Fevral","Mart","Aprel","May","İyun",
+                 "İyul","Avqust","Sentyabr","Oktyabr","Noyabr","Dekabr"];
+function fmtDateAz(s){
+  if(!s) return "";
+  const d=new Date(s);
+  if(isNaN(d)) return s;
+  return `${d.getDate()} ${AZ_MONTHS[d.getMonth()]}, ${d.getFullYear()}-ci il`;
+}
+function moneyAz(n){
+  return Number(n||0).toLocaleString("az-AZ",{minimumFractionDigits:2,maximumFractionDigits:2});
+}
+
+/* ---------- Rəqəmi sözlə (AZ) ---------- */
+function azWords(n){
+  const ones=["","bir","iki","üç","dörd","beş","altı","yeddi","səkkiz","doqquz"];
+  const tens=["","on","iyirmi","otuz","qırx","əlli","altmış","yetmiş","səksən","doxsan"];
+  function below1000(num){
+    const out=[];
+    const h=Math.floor(num/100), t=Math.floor((num%100)/10), o=num%10;
+    if(h) out.push((h>1?ones[h]+" ":"")+"yüz");
+    if(t) out.push(tens[t]);
+    if(o) out.push(ones[o]);
+    return out.join(" ");
+  }
+  n=Math.floor(n);
+  if(n===0) return "sıfır";
+  const parts=[];
+  const milyard=Math.floor(n/1e9); n%=1e9;
+  const milyon =Math.floor(n/1e6); n%=1e6;
+  const min    =Math.floor(n/1e3); n%=1e3;
+  if(milyard) parts.push(below1000(milyard)+" milyard");
+  if(milyon)  parts.push(below1000(milyon)+" milyon");
+  if(min)     parts.push((min>1?below1000(min)+" ":"")+"min");
+  if(n)       parts.push(below1000(n));
+  return parts.join(" ").trim();
+}
+function amountInWords(total){
+  const manat=Math.floor(total);
+  const qepik=Math.round((total-manat)*100);
+  let w=azWords(manat);
+  w=w.charAt(0).toUpperCase()+w.slice(1);
+  return `${w} AZN ${String(qepik).padStart(2,"0")}`;
+}
+
+let CAMPAIGNS={}, CLIENTS={}, COMPANIES={};
 
 async function init(){
-  if(location.protocol === "file:"){
-    $("page").innerHTML = `<div class="empty">This page was opened directly from disk (file://).<br>Browsers block API requests in that mode — open it through your live GitHub Pages URL instead.</div>`;
-    setStatus("Blocked: file://");
-    return;
+  if(location.protocol==="file:"){
+    $("page").innerHTML=`<div class="empty">Bu səhifə birbaşa diskdən (file://) açılıb.<br>Brauzer bu rejimdə API sorğularını bloklayır — canlı GitHub Pages linkindən açın.</div>`;
+    setStatus("Bloklandı: file://"); return;
   }
   try{
-    setStatus("Loading data…");
+    setStatus("Məlumatlar yüklənir…");
     const [invs, camps, clients, comps] = await Promise.all([
       fetchAllLabeled("Invoices", CONFIG.T_INVOICES),
       fetchAllLabeled("Campaigns", CONFIG.T_CAMPAIGNS),
       fetchAllLabeled("Clients", CONFIG.T_CLIENTS),
       fetchAllLabeled("Company", CONFIG.T_COMPANY),
     ]);
-    CAMPAIGNS = byId(camps); CLIENTS = byId(clients); COMPANIES = byId(comps);
+    CAMPAIGNS=byId(camps); CLIENTS=byId(clients); COMPANIES=byId(comps);
 
-    // build dropdown
-    const sel = $("invSel");
+    const sel=$("invSel");
     invs.sort((a,b)=>String(b.fields["Invoice Number"]||"").localeCompare(String(a.fields["Invoice Number"]||"")));
-    sel.innerHTML = invs.map(r=>{
+    sel.innerHTML=invs.map(r=>{
       const f=r.fields, c=CLIENTS[first(f.Client)]?.["Client Name"]||"";
       return `<option value="${r.id}">${esc(f["Invoice Number"]||r.id)} — ${esc(c)}</option>`;
     }).join("");
-    sel.onchange = ()=>{ const r=invs.find(x=>x.id===sel.value); render(r.fields); };
+    sel.onchange=()=>{ const r=invs.find(x=>x.id===sel.value); render(r.fields); };
 
-    // pick invoice: ?number=INV-2026-001 (Invoice Number field) takes priority,
-    // ?id=recXXXXXXXX (Airtable record id) still works as a fallback,
-    // otherwise show the most recent invoice.
-    const qs = new URLSearchParams(location.search);
-    const wantedNumber = qs.get("number");
-    const wantedId = qs.get("id");
-
-    let start = null;
+    const qs=new URLSearchParams(location.search);
+    const wantedNumber=qs.get("number");
+    const wantedId=qs.get("id");
+    let start=null;
     if(wantedNumber){
-      start = invs.find(r => String(r.fields["Invoice Number"]||"").trim().toLowerCase() === wantedNumber.trim().toLowerCase());
-      if(!start){
-        $("page").innerHTML = `<div class="empty">Invoice tapılmadı: <b>${esc(wantedNumber)}</b></div>`;
-        setStatus("Not found");
-        return;
-      }
+      start=invs.find(r=>String(r.fields["Invoice Number"]||"").trim().toLowerCase()===wantedNumber.trim().toLowerCase());
+      if(!start){ $("page").innerHTML=`<div class="empty">Hesab tapılmadı: <b>${esc(wantedNumber)}</b></div>`; setStatus("Tapılmadı"); return; }
     } else if(wantedId){
-      start = invs.find(r => r.id === wantedId);
+      start=invs.find(r=>r.id===wantedId);
     }
-    if(!start) start = invs[0];
-
-    if(!start){ $("page").innerHTML = `<div class="empty">No invoices found.</div>`; setStatus(""); return; }
-    sel.value = start.id;
+    if(!start) start=invs[0];
+    if(!start){ $("page").innerHTML=`<div class="empty">Heç bir hesab tapılmadı.</div>`; setStatus(""); return; }
+    sel.value=start.id;
     render(start.fields);
-    setStatus(`${invs.length} invoices loaded`);
+    setStatus(`${invs.length} hesab yükləndi`);
   }catch(e){
-    setStatus("Error");
-    $("page").innerHTML = `<div class="empty">Failed to load.<br><small>${esc(e.message)}</small></div>`;
+    setStatus("Xəta");
+    $("page").innerHTML=`<div class="empty">Yüklənmə alınmadı.<br><small>${esc(e.message)}</small></div>`;
     console.error(e);
   }
 }
 
 function render(f){
-  const company = COMPANIES[first(f["Your company"])] || {};
-  const client  = CLIENTS[first(f.Client)] || {};
-  const logo = first(company["Your logo"])?.url || first(f["(Hidden) Your logo"])?.url || "";
-  const companyName = company["Your business name"] || "";
-  const person = company["Your first and last name"] || first(f["(Hidden) Your first and last name"]) || "";
-  const terms = company["Your Terms and Conditions"] || first(f["(Hidden) Your Terms and Conditions"]) || "";
-  const comments = f["Comments"] || f["(Hidden) Comments"] || "";
-  const discountPct = Number(f["Discount %"] ?? f["(Hidden) Discount %"] ?? 0) || 0;
+  const client = CLIENTS[first(f.Client)] || {};
 
-  // line items in invoice order
+  const company = COMPANIES[first(f["Your company"])] || {};
+  const airtableLogo = first(company["Your logo"])?.url || first(f["(Hidden) Your logo"])?.url || "";
+  const logoSrc = SENDER.LOGO || airtableLogo;
+
   const ids = f.Campaign || [];
   const rows = ids.map(id=>CAMPAIGNS[id]).filter(Boolean);
   let subTotal=0, taxTotal=0;
@@ -280,88 +285,77 @@ function render(f){
       <td class="num">${i+1}</td>
       <td>${esc(c["Campaign Name"]||"")}</td>
       <td class="num">${esc(cnt)}</td>
-      <td class="num">${money(amt)}</td>
+      <td class="num">${moneyAz(amt)}</td>
       <td class="num">${esc(c["Tax %"]??"")}%</td>
-      <td class="num">${money(tax)}</td>
-      <td class="num">${money(tot)}</td>
+      <td class="num">${moneyAz(tax)}</td>
+      <td class="num">${moneyAz(tot)}</td>
     </tr>`;
   }).join("");
-  const discountAmount = subTotal * discountPct / 100;
-  const subAfterDiscount = subTotal - discountAmount;
-  const grand = Number(f["Total Amount (AZN)"] ?? (subAfterDiscount + taxTotal));
-
-  const status = (f["Payment Status"]||"").toLowerCase();
-  const badgeCls = status==="paid"?"paid":(status==="unpaid"||status==="overdue")?"unpaid":"other";
+  const grand = Number(f["Total Amount (AZN)"] ?? (subTotal+taxTotal));
 
   const cur = CONFIG.CURRENCY;
+  const hesabNo = f["Hesab №"] || f["Invoice Number"] || "";
+
+  const payerName = client["Client Name"] || "";
+  const payerVoen = client["Client VOEN"] || "";
+
   $("page").innerHTML = `
-    <div class="head">
-      <div class="brand">
-        ${logo?`<img src="${esc(logo)}" alt="">`:""}
-        <div>
-          <div class="name">${esc(companyName)}</div>
-          ${person?`<div class="person">${esc(person)}</div>`:""}
-        </div>
-      </div>
-      <div class="doc">
-        <h1>${esc(CONFIG.DOC_TITLE)}</h1>
-        <div class="num"># ${esc(f["Invoice Number"]||"")}</div>
-        ${f["Payment Status"]?`<span class="badge ${badgeCls}">${esc(f["Payment Status"])}</span>`:""}
+    <div class="logo-wrap">
+      ${logoSrc
+        ? `<img src="${esc(logoSrc)}" alt="${esc(SENDER.name)}" onerror="this.replaceWith(Object.assign(document.createElement('div'),{className:'logo-fallback',textContent:${JSON.stringify(SENDER.name)}}))">`
+        : `<div class="logo-fallback">${esc(SENDER.name)}</div>`}
+    </div>
+
+    <div class="row">
+      <div class="lbl">Mal / Xidmət göndərən:</div>
+      <div class="center-block" style="text-align:left">
+        ${esc(SENDER.name)}<br>VÖEN ${esc(SENDER.voen)}
       </div>
     </div>
 
-    <div class="meta">
-      <div class="col">
-        <h3>Details</h3>
-        <div class="kv"><span class="k">Issue date</span><span class="v">${fmtDate(f["Issue Date"])}</span></div>
-        <div class="kv"><span class="k">Due date</span><span class="v">${fmtDate(f["Due Date"])}</span></div>
-        <div class="kv"><span class="k">Contract</span><span class="v">${esc(f["Contract"]||"—")}</span></div>
-        <div class="kv"><span class="k">Payment method</span><span class="v">Bank transfer</span></div>
-        ${person?`<div class="kv"><span class="k">From</span><span class="v">${esc(person)}</span></div>`:""}
-      </div>
-      <div class="col billto">
-        <h3>Bill to</h3>
-        <div class="who">${esc(client["Client Name"]||"")}</div>
-        ${client["Client VOEN"]?`<div class="kv"><span class="k">VOEN</span><span class="v">${esc(client["Client VOEN"])}</span></div>`:""}
-        ${client["Country"]?`<div class="kv"><span class="k">Country</span><span class="v">${esc(client["Country"])}</span></div>`:""}
-        ${client["Website"]?`<div class="kv"><span class="k">Website</span><span class="v">${esc(client["Website"])}</span></div>`:""}
-      </div>
-    </div>
+    <div class="block"><b>Ünvan:</b> ${esc(SENDER.address)}</div>
+
+    <div class="block"><b>Mal göndərənin rekvizitləri:</b> ${esc(SENDER.bankReqs)}</div>
+
+    <div class="block"><b>Ödəyən müştəri:</b> ${esc(payerName)}${payerVoen?` , VÖEN: ${esc(payerVoen)}`:``}</div>
+
+    <div class="title">HESAB № ${esc(hesabNo)}</div>
+    <div class="subtitle">${fmtDateAz(f["Issue Date"])}</div>
+
+    <div class="contract">${esc(SENDER.contractLine)}</div>
 
     <table class="items">
       <thead>
         <tr>
-          <th class="num">#</th><th>Campaign</th><th class="num">Count</th>
-          <th class="num">Amount (${cur})</th><th class="num">Tax %</th>
-          <th class="num">Tax (${cur})</th><th class="num">Total (${cur})</th>
+          <th class="num">№</th>
+          <th>MALLARIN (XİDMƏTLƏRİN) ADI</th>
+          <th class="num">MİQDAR</th>
+          <th class="num">MƏBLƏĞ (${cur})</th>
+          <th class="num">ƏDV %</th>
+          <th class="num">ƏDV MƏBLƏĞİ (${cur})</th>
+          <th class="num">YEKUN (${cur})</th>
         </tr>
       </thead>
-      <tbody>${body || `<tr><td colspan="7" style="text-align:center;color:#9ca3af;padding:24px">No line items</td></tr>`}</tbody>
+      <tbody>${body || `<tr><td colspan="7" style="text-align:center;color:#9ca3af;padding:24px">Sətir yoxdur</td></tr>`}</tbody>
     </table>
 
     <div class="totals">
       <table>
-        <tr><td class="k">Subtotal (excl. tax)</td><td class="v">${money(subTotal)} ${cur}</td></tr>
-        ${discountPct > 0 ? `
-        <tr><td class="k">Discount ${discountPct}%</td><td class="v">- ${money(discountAmount)} ${cur}</td></tr>
-        <tr><td class="k">Subtotal (after discount)</td><td class="v">${money(subAfterDiscount)} ${cur}</td></tr>
-        ` : ``}
-        <tr><td class="k">Tax</td><td class="v">${money(taxTotal)} ${cur}</td></tr>
-        <tr class="grand"><td class="k">Total</td><td class="v">${money(grand)} ${cur}</td></tr>
+        <tr><td class="k">Məbləğ:</td><td class="v">${moneyAz(subTotal)} ${cur}</td></tr>
+        <tr><td class="k">ƏDV məbləği:</td><td class="v">${moneyAz(taxTotal)} ${cur}</td></tr>
+        <tr class="grand"><td class="k">Yekun:</td><td class="v">${moneyAz(grand)} ${cur}</td></tr>
       </table>
     </div>
 
-    <div class="bottom">
-      <div class="col">
-        ${comments?`<h3>Comment(s)</h3><p>${esc(comments)}</p>`:""}
-      </div>
-      <div class="col">
-        <h3>Client's signature</h3>
-        <div class="sig-box"></div>
-      </div>
+    <div class="summary">
+      <div>Cəmi ${rows.length} sətir, məbləğ ${moneyAz(grand)} ${cur}</div>
+      <div class="words">Yazı ilə: ${esc(amountInWords(grand))}</div>
     </div>
 
-    ${terms?`<div class="terms"><h3>Terms &amp; Conditions</h3><p>${esc(terms)}</p></div>`:""}
+    <div class="sign">
+      <div>Direktor</div>
+      <div>${esc(SENDER.director)}</div>
+    </div>
   `;
 }
 
