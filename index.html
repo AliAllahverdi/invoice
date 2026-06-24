@@ -53,8 +53,8 @@
   /* ---------- Sender / meta lines ---------- */
   .row{display:flex; gap:16px; margin:10px 0;}
   .row .lbl{min-width:170px; font-weight:700;}
-  .sender-name{margin-left:150px; font-weight:700; line-height:1.4;}
-  .block{margin:10px 0;}
+  .sender-name{margin-left:200px; font-weight:700; line-height:1.4;}
+  .block{margin:23px 0;}
   .block b{font-weight:700;}
 
   .title{text-align:center; margin:26px 0 4px; font-size:20px; font-weight:700;}
@@ -84,7 +84,7 @@
   .summary .words{font-weight:700; margin-top:2px;}
 
   /* ---------- Signature ---------- */
-  .sign{margin-top:40px; padding-top:14px; border-top:1px solid #333;
+  .sign{margin-top:40px; padding-top:26px; border-top:1px solid #333;
         display:flex; justify-content:space-between; font-weight:700;}
 
   .empty{padding:60px; text-align:center; color:var(--muted); font-family:Arial,sans-serif;}
@@ -349,7 +349,7 @@ function render(f){
 
     <div class="sign">
       <div>Direktor</div>
-      <div style='padding: 20px'>${esc(SENDER.director)}</div>
+      <div>${esc(SENDER.director)}</div>
     </div>
   `;
 }
