@@ -1,214 +1,309 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-
-<title>Invoice Viewer</title>
-
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Invoice</title>
 <style>
+  :root{
+    --ink:#1a1a1a; --muted:#6b7280; --line:#e5e7eb; --head:#111827;
+    --accent:#111827; --paper:#ffffff; --pagew:210mm;
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0; background:#f3f4f6; color:var(--ink);
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    font-size:13px; line-height:1.45;
+  }
 
-body{
-    font-family: Arial;
-    background:#f5f6f8;
-    padding:30px;
-}
+  /* ---------- Toolbar (screen only) ---------- */
+  .toolbar{
+    position:sticky; top:0; z-index:10;
+    display:flex; align-items:center; gap:12px; flex-wrap:wrap;
+    padding:10px 16px; background:#111827; color:#fff;
+  }
+  .toolbar label{font-size:12px; color:#9ca3af;}
+  .toolbar select{
+    padding:7px 10px; border-radius:6px; border:1px solid #374151;
+    background:#1f2937; color:#fff; font-size:13px; min-width:240px;
+  }
+  .toolbar button{
+    padding:8px 16px; border:0; border-radius:6px; cursor:pointer;
+    background:#2563eb; color:#fff; font-size:13px; font-weight:600;
+  }
+  .toolbar button:hover{background:#1d4ed8;}
+  .toolbar .status{font-size:12px; color:#9ca3af; margin-left:auto;}
 
-.invoice{
-    max-width:1000px;
-    margin:auto;
-    background:white;
-    padding:40px;
-    border-radius:10px;
-}
+  /* ---------- Page / paper ---------- */
+  .sheet{padding:24px; display:flex; justify-content:center;}
+  .page{
+    width:var(--pagew); background:var(--paper);
+    padding:18mm 16mm; box-shadow:0 1px 6px rgba(0,0,0,.15);
+  }
 
-.header{
-    display:flex;
-    justify-content:space-between;
-}
+  /* ---------- Header ---------- */
+  .head{display:flex; justify-content:space-between; align-items:flex-start; gap:24px;}
+  .brand{display:flex; align-items:center; gap:14px;}
+  .brand img{width:54px; height:54px; object-fit:contain;}
+  .brand .name{font-size:20px; font-weight:700;}
+  .brand .person{font-size:12px; color:var(--muted);}
+  .doc h1{margin:0; font-size:26px; letter-spacing:1px; text-align:right; color:var(--head);}
+  .doc .num{text-align:right; color:var(--muted); margin-top:2px;}
+  .badge{
+    display:inline-block; margin-top:8px; padding:3px 10px; border-radius:999px;
+    font-size:11px; font-weight:700; text-transform:uppercase; letter-spacing:.5px;
+  }
+  .badge.paid{background:#dcfce7; color:#166534;}
+  .badge.unpaid{background:#fee2e2; color:#991b1b;}
+  .badge.other{background:#e5e7eb; color:#374151;}
 
-h1{
-    margin:0;
-}
+  /* ---------- Meta blocks ---------- */
+  .meta{display:flex; justify-content:space-between; gap:32px; margin-top:26px;}
+  .meta .col{flex:1;}
+  .meta h3{
+    margin:0 0 8px; font-size:11px; text-transform:uppercase;
+    letter-spacing:.6px; color:var(--muted); font-weight:700;
+  }
+  .kv{display:flex; gap:8px; margin:3px 0;}
+  .kv .k{color:var(--muted); min-width:120px;}
+  .kv .v{font-weight:500;}
+  .billto .who{font-size:15px; font-weight:700; margin-bottom:2px;}
 
-table{
-    width:100%;
-    border-collapse:collapse;
-    margin-top:20px;
-}
+  /* ---------- Line items ---------- */
+  table.items{width:100%; border-collapse:collapse; margin-top:28px; font-size:12.5px;}
+  table.items thead th{
+    background:var(--head); color:#fff; text-align:left; padding:9px 10px;
+    font-weight:600; font-size:11.5px; text-transform:uppercase; letter-spacing:.4px;
+  }
+  table.items tbody td{padding:9px 10px; border-bottom:1px solid var(--line);}
+  table.items .num{text-align:right; white-space:nowrap;}
+  table.items tbody tr:nth-child(even){background:#fafafa;}
 
-th,td{
-    border:1px solid #ddd;
-    padding:10px;
-}
+  /* ---------- Totals ---------- */
+  .totals{display:flex; justify-content:flex-end; margin-top:18px;}
+  .totals table{border-collapse:collapse; min-width:280px;}
+  .totals td{padding:6px 10px;}
+  .totals td.k{color:var(--muted); text-align:right;}
+  .totals td.v{text-align:right; font-weight:600; white-space:nowrap;}
+  .totals tr.grand td{
+    border-top:2px solid var(--head); font-size:16px; padding-top:10px;
+  }
+  .totals tr.grand td.v{font-weight:800;}
 
-th{
-    background:#eee;
-}
+  /* ---------- Terms ---------- */
+  .terms{margin-top:34px; padding-top:14px; border-top:1px solid var(--line);}
+  .terms h3{margin:0 0 6px; font-size:11px; text-transform:uppercase; letter-spacing:.6px; color:var(--muted);}
+  .terms p{margin:0; color:#374151; white-space:pre-wrap;}
 
-.total{
-    text-align:right;
-    margin-top:20px;
-    font-size:20px;
-    font-weight:bold;
-}
+  .empty{padding:60px; text-align:center; color:var(--muted);}
 
-.loading{
-    text-align:center;
-    margin-top:100px;
-}
-
-button{
-    position:fixed;
-    top:20px;
-    right:20px;
-    padding:10px 15px;
-}
-
+  /* ---------- Print ---------- */
+  @page{ size:A4; margin:12mm; }
+  @media print{
+    body{background:#fff;}
+    .toolbar{display:none !important;}
+    .sheet{padding:0;}
+    .page{width:auto; box-shadow:none; padding:0;}
+    table.items thead{display:table-header-group;}   /* repeat header on each page */
+    table.items tr{break-inside:avoid;}
+    .totals,.terms{break-inside:avoid;}
+  }
 </style>
-
 </head>
-
 <body>
 
-<button onclick="window.print()">Print</button>
+  <div class="toolbar">
+    <label for="invSel">Invoice</label>
+    <select id="invSel"></select>
+    <button id="printBtn">Print / Save PDF</button>
+    <span class="status" id="status">Loading…</span>
+  </div>
 
-<div id="loading">Loading invoice...</div>
-
-<div class="invoice" id="invoice" style="display:none;">
-
-    <div class="header">
-        <h1>INVOICE</h1>
-        <div id="invoiceNumber"></div>
+  <div class="sheet">
+    <div class="page" id="page">
+      <div class="empty">Select an invoice…</div>
     </div>
-
-    <p><b>Client:</b> <span id="client"></span></p>
-    <p><b>Issue Date:</b> <span id="issue"></span></p>
-    <p><b>Due Date:</b> <span id="due"></span></p>
-
-    <table>
-        <thead>
-            <tr>
-                <th>Campaign</th>
-                <th>Amount</th>
-            </tr>
-        </thead>
-        <tbody id="rows"></tbody>
-    </table>
-
-    <div class="total">
-        Total: <span id="total"></span>
-    </div>
-
-</div>
+  </div>
 
 <script>
+/* ============================================================
+   CONFIG  —  ⚠️ replace TOKEN with a READ-ONLY Airtable token.
+   This file holds the token client-side; keep it internal,
+   do not publish/commit it. Scope: data.records:read on this base.
+   ============================================================ */
+const CONFIG = {
+  TOKEN: "patBXfNSVLkFxR8Wo.40a7cde49a65ebe3b81a51ac7acdf4e1990834bb5856ccb8ac7e9969d7c6d112",
+  BASE:  "appaW9XYnzJNp4fpi",
+  T_INVOICES: "tblGsNml3qIAA29pT",
+  T_CAMPAIGNS:"tbl8EromseyPeHgL6",
+  T_CLIENTS:  "tblmSmQm9EOvhThoO",
+  T_COMPANY:  "tblqR2FsfeuX6S8t5",
+  DOC_TITLE:  "INVOICE",         // header word; change to "QUOTE" if preferred
+  CURRENCY:   "AZN"              // line-item / totals currency label
+};
 
-/* =========================
-   CONFIG
-========================= */
+const API = `https://api.airtable.com/v0/${CONFIG.BASE}`;
+const H = { Authorization:`Bearer ${CONFIG.TOKEN}` };
+const $ = id => document.getElementById(id);
+const setStatus = m => $("status").textContent = m;
 
-const AIRTABLE_TOKEN = "patBXfNSVLkFxR8Wo.d001fc9127510cd55ac6c25e8bc144351a09e61049c2f22757f7479eeb2f6ba6"; // ⚠️ sonra siləcəyik 
-    const BASE_ID = "appaW9XYnzJNp4fpi"; 
-    const TABLE = "📄 Invoices";
+async function apiGet(path){
+  const r = await fetch(`${API}/${path}`, { headers:H });
+  if(!r.ok) throw new Error(`${r.status} ${await r.text()}`);
+  return r.json();
+}
+// fetch every record of a table (handles pagination)
+async function fetchAll(tableId){
+  let out=[], offset;
+  do{
+    const q = offset ? `?offset=${offset}` : "";
+    const d = await apiGet(`${tableId}${q}`);
+    out = out.concat(d.records);
+    offset = d.offset;
+  } while(offset);
+  return out;
+}
+const byId = recs => Object.fromEntries(recs.map(r=>[r.id, r.fields]));
 
-    
-/* =========================
-   URL PARAM (Invoice Number)
-========================= */
+function fmtDate(s){
+  if(!s) return "—";
+  const d = new Date(s);
+  return isNaN(d) ? s : d.toLocaleDateString("en-GB",{day:"2-digit",month:"short",year:"numeric"});
+}
+function money(n){
+  const v = Number(n||0);
+  return v.toLocaleString("en-US",{minimumFractionDigits:2,maximumFractionDigits:2});
+}
+function esc(s){ return String(s??"").replace(/[&<>]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;"}[c])); }
+function first(v){ return Array.isArray(v) ? v[0] : v; }
 
-const params = new URLSearchParams(window.location.search);
-const invoiceNumber = params.get("number");
+let CAMPAIGNS = {}, CLIENTS = {}, COMPANIES = {};
 
-if (!invoiceNumber) {
-    throw new Error("Invoice number yoxdur");
+async function init(){
+  try{
+    setStatus("Loading data…");
+    const [invs, camps, clients, comps] = await Promise.all([
+      fetchAll(CONFIG.T_INVOICES),
+      fetchAll(CONFIG.T_CAMPAIGNS),
+      fetchAll(CONFIG.T_CLIENTS),
+      fetchAll(CONFIG.T_COMPANY),
+    ]);
+    CAMPAIGNS = byId(camps); CLIENTS = byId(clients); COMPANIES = byId(comps);
+
+    // build dropdown
+    const sel = $("invSel");
+    invs.sort((a,b)=>String(b.fields["Invoice Number"]||"").localeCompare(String(a.fields["Invoice Number"]||"")));
+    sel.innerHTML = invs.map(r=>{
+      const f=r.fields, c=CLIENTS[first(f.Client)]?.["Client Name"]||"";
+      return `<option value="${r.id}">${esc(f["Invoice Number"]||r.id)} — ${esc(c)}</option>`;
+    }).join("");
+    sel.onchange = ()=>{ const r=invs.find(x=>x.id===sel.value); render(r.fields); };
+
+    // pick from ?id= or first
+    const wanted = new URLSearchParams(location.search).get("id");
+    const start = invs.find(r=>r.id===wanted) || invs[0];
+    if(!start){ $("page").innerHTML = `<div class="empty">No invoices found.</div>`; setStatus(""); return; }
+    sel.value = start.id;
+    render(start.fields);
+    setStatus(`${invs.length} invoices loaded`);
+  }catch(e){
+    setStatus("Error");
+    $("page").innerHTML = `<div class="empty">Failed to load.<br><small>${esc(e.message)}</small></div>`;
+    console.error(e);
+  }
 }
 
-/* =========================
-   FETCH INVOICE (FILTER BY FORMULA)
-========================= */
+function render(f){
+  const company = COMPANIES[first(f["Your company"])] || {};
+  const client  = CLIENTS[first(f.Client)] || {};
+  const logo = first(company["Your logo"])?.url || first(f["(Hidden) Your logo"])?.url || "";
+  const companyName = company["Your business name"] || "";
+  const person = company["Your first and last name"] || first(f["(Hidden) Your first and last name"]) || "";
+  const terms = company["Your Terms and Conditions"] || first(f["(Hidden) Your Terms and Conditions"]) || "";
 
-async function loadInvoice() {
+  // line items in invoice order
+  const ids = f.Campaign || [];
+  const rows = ids.map(id=>CAMPAIGNS[id]).filter(Boolean);
+  let subTotal=0, taxTotal=0;
+  const body = rows.map((c,i)=>{
+    const amt=Number(c["Amount (AZN)"]||0), tax=Number(c["Tax amount (AZN)"]||0),
+          tot=Number(c["Total Amount (AZN)"]||amt+tax), cnt=c["Count"]??1;
+    subTotal+=amt; taxTotal+=tax;
+    return `<tr>
+      <td class="num">${i+1}</td>
+      <td>${esc(c["Campaign Name"]||"")}</td>
+      <td class="num">${esc(cnt)}</td>
+      <td class="num">${money(amt)}</td>
+      <td class="num">${esc(c["Tax %"]??"")}%</td>
+      <td class="num">${money(tax)}</td>
+      <td class="num">${money(tot)}</td>
+    </tr>`;
+  }).join("");
+  const grand = Number(f["Total Amount (AZN)"] ?? (subTotal+taxTotal));
 
-    const url =
-        `https://api.airtable.com/v0/${BASE_ID}/${encodeURIComponent(TABLE)}` +
-        `?filterByFormula=${encodeURIComponent(`{Invoice Number}="${invoiceNumber}"`)}`;
+  const status = (f["Payment Status"]||"").toLowerCase();
+  const badgeCls = status==="paid"?"paid":(status==="unpaid"||status==="overdue")?"unpaid":"other";
 
-    const res = await fetch(url, {
-        headers: {
-            Authorization: `Bearer ${AIRTABLE_TOKEN}`
-        }
-    });
+  const cur = CONFIG.CURRENCY;
+  $("page").innerHTML = `
+    <div class="head">
+      <div class="brand">
+        ${logo?`<img src="${esc(logo)}" alt="">`:""}
+        <div>
+          <div class="name">${esc(companyName)}</div>
+          ${person?`<div class="person">${esc(person)}</div>`:""}
+        </div>
+      </div>
+      <div class="doc">
+        <h1>${esc(CONFIG.DOC_TITLE)}</h1>
+        <div class="num"># ${esc(f["Invoice Number"]||"")}</div>
+        ${f["Payment Status"]?`<span class="badge ${badgeCls}">${esc(f["Payment Status"])}</span>`:""}
+      </div>
+    </div>
 
-    const data = await res.json();
+    <div class="meta">
+      <div class="col">
+        <h3>Details</h3>
+        <div class="kv"><span class="k">Issue date</span><span class="v">${fmtDate(f["Issue Date"])}</span></div>
+        <div class="kv"><span class="k">Due date</span><span class="v">${fmtDate(f["Due Date"])}</span></div>
+        <div class="kv"><span class="k">Contract</span><span class="v">${esc(f["Contract"]||"—")}</span></div>
+        <div class="kv"><span class="k">Payment method</span><span class="v">Bank transfer</span></div>
+        ${person?`<div class="kv"><span class="k">From</span><span class="v">${esc(person)}</span></div>`:""}
+      </div>
+      <div class="col billto">
+        <h3>Bill to</h3>
+        <div class="who">${esc(client["Client Name"]||"")}</div>
+        ${client["Client VOEN"]?`<div class="kv"><span class="k">VOEN</span><span class="v">${esc(client["Client VOEN"])}</span></div>`:""}
+        ${client["Country"]?`<div class="kv"><span class="k">Country</span><span class="v">${esc(client["Country"])}</span></div>`:""}
+        ${client["Website"]?`<div class="kv"><span class="k">Website</span><span class="v">${esc(client["Website"])}</span></div>`:""}
+      </div>
+    </div>
 
-    console.log("Airtable response:", data);
+    <table class="items">
+      <thead>
+        <tr>
+          <th class="num">#</th><th>Campaign</th><th class="num">Count</th>
+          <th class="num">Amount (${cur})</th><th class="num">Tax %</th>
+          <th class="num">Tax (${cur})</th><th class="num">Total (${cur})</th>
+        </tr>
+      </thead>
+      <tbody>${body || `<tr><td colspan="7" style="text-align:center;color:#9ca3af;padding:24px">No line items</td></tr>`}</tbody>
+    </table>
 
-    if (!data.records || data.records.length === 0) {
-        throw new Error("Invoice tapilmadi: " + invoiceNumber);
-    }
+    <div class="totals">
+      <table>
+        <tr><td class="k">Subtotal (excl. tax)</td><td class="v">${money(subTotal)} ${cur}</td></tr>
+        <tr><td class="k">Tax</td><td class="v">${money(taxTotal)} ${cur}</td></tr>
+        <tr class="grand"><td class="k">Total</td><td class="v">${money(grand)} ${cur}</td></tr>
+      </table>
+    </div>
 
-    const record = data.records[0];
-
-    render(record.fields);
+    ${terms?`<div class="terms"><h3>Terms &amp; Conditions</h3><p>${esc(terms)}</p></div>`:""}
+  `;
 }
 
-/* =========================
-   RENDER
-========================= */
-
-function render(fields) {
-
-    document.getElementById("invoiceNumber").innerText =
-        fields["Invoice Number"] || "";
-
-    document.getElementById("client").innerText =
-        fields["Client"] || "";
-
-    document.getElementById("issue").innerText =
-        fields["Issue Date"] || "";
-
-    document.getElementById("due").innerText =
-        fields["Due Date"] || "";
-
-    document.getElementById("total").innerText =
-        (fields["Total Amount (AZN)"] || "") + " AZN";
-
-    /* =========================
-       CAMPAIGNS (linked records fix)
-    ========================= */
-
-    const campaigns = fields["Campaign"] || [];
-
-    const tbody = document.getElementById("rows");
-    tbody.innerHTML = "";
-
-    campaigns.forEach(c => {
-
-        const name =
-            typeof c === "string"
-                ? c
-                : c.name || c;
-
-        tbody.innerHTML += `
-            <tr>
-                <td>${name}</td>
-                <td>-</td>
-            </tr>
-        `;
-    });
-
-    document.getElementById("loading").style.display = "none";
-    document.getElementById("invoice").style.display = "block";
-}
-
-/* =========================
-   INIT
-========================= */
-
-loadInvoice();
-
+$("printBtn").onclick = ()=>window.print();
+init();
 </script>
-
 </body>
 </html>
