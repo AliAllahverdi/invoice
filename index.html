@@ -108,24 +108,30 @@ button{
    CONFIG
 ========================= */
 
-const AIRTABLE_TOKEN = "patBXfNSVLkFxR8Wo.d001fc9127510cd55ac6c25e8bc144351a09e61049c2f22757f7479eeb2f6ba6"; // ⚠️ sonra siləcəyik
+const AIRTABLE_TOKEN = "patXXXX_REVOKE_ET"; // ⚠️ bunu sonra sil
 const BASE_ID = "appaW9XYnzJNp4fpi";
 const TABLE = "📄 Invoices";
 
 /* =========================
-   URL PARAM
+   URL PARAM (Invoice Number)
 ========================= */
 
 const params = new URLSearchParams(window.location.search);
-const invoiceId = params.get("id");
+const invoiceNumber = params.get("number");
+
+if (!invoiceNumber) {
+    throw new Error("Invoice number yoxdur");
+}
 
 /* =========================
-   FETCH INVOICE
+   FETCH INVOICE (FILTER BY FORMULA)
 ========================= */
 
-async function loadInvoice(){
+async function loadInvoice() {
 
-    const url = `https://api.airtable.com/v0/${BASE_ID}/${encodeURIComponent(TABLE)}/${invoiceId}`;
+    const url =
+        `https://api.airtable.com/v0/${BASE_ID}/${encodeURIComponent(TABLE)}` +
+        `?filterByFormula=${encodeURIComponent(`{Invoice Number}="${invoiceNumber}"`)}`;
 
     const res = await fetch(url, {
         headers: {
@@ -135,32 +141,57 @@ async function loadInvoice(){
 
     const data = await res.json();
 
-    const fields = data.fields;
+    console.log("Airtable response:", data);
 
-    render(fields);
+    if (!data.records || data.records.length === 0) {
+        throw new Error("Invoice tapilmadi: " + invoiceNumber);
+    }
+
+    const record = data.records[0];
+
+    render(record.fields);
 }
 
 /* =========================
    RENDER
 ========================= */
 
-function render(fields){
+function render(fields) {
 
-    document.getElementById("invoiceNumber").innerText = fields["Invoice Number"];
-    document.getElementById("client").innerText = fields["Client"];
-    document.getElementById("issue").innerText = fields["Issue Date"];
-    document.getElementById("due").innerText = fields["Due Date"];
-    document.getElementById("total").innerText = fields["Total Amount (AZN)"];
+    document.getElementById("invoiceNumber").innerText =
+        fields["Invoice Number"] || "";
+
+    document.getElementById("client").innerText =
+        fields["Client"] || "";
+
+    document.getElementById("issue").innerText =
+        fields["Issue Date"] || "";
+
+    document.getElementById("due").innerText =
+        fields["Due Date"] || "";
+
+    document.getElementById("total").innerText =
+        (fields["Total Amount (AZN)"] || "") + " AZN";
+
+    /* =========================
+       CAMPAIGNS (linked records fix)
+    ========================= */
 
     const campaigns = fields["Campaign"] || [];
 
     const tbody = document.getElementById("rows");
+    tbody.innerHTML = "";
 
     campaigns.forEach(c => {
 
+        const name =
+            typeof c === "string"
+                ? c
+                : c.name || c;
+
         tbody.innerHTML += `
             <tr>
-                <td>${c}</td>
+                <td>${name}</td>
                 <td>-</td>
             </tr>
         `;
