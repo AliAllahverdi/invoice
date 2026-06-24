@@ -199,9 +199,26 @@ async function init(){
     }).join("");
     sel.onchange = ()=>{ const r=invs.find(x=>x.id===sel.value); render(r.fields); };
 
-    // pick from ?id= or first
-    const wanted = new URLSearchParams(location.search).get("id");
-    const start = invs.find(r=>r.id===wanted) || invs[0];
+    // pick invoice: ?number=INV-2026-001 (Invoice Number field) takes priority,
+    // ?id=recXXXXXXXX (Airtable record id) still works as a fallback,
+    // otherwise show the most recent invoice.
+    const qs = new URLSearchParams(location.search);
+    const wantedNumber = qs.get("number");
+    const wantedId = qs.get("id");
+
+    let start = null;
+    if(wantedNumber){
+      start = invs.find(r => String(r.fields["Invoice Number"]||"").trim().toLowerCase() === wantedNumber.trim().toLowerCase());
+      if(!start){
+        $("page").innerHTML = `<div class="empty">Invoice tapılmadı: <b>${esc(wantedNumber)}</b></div>`;
+        setStatus("Not found");
+        return;
+      }
+    } else if(wantedId){
+      start = invs.find(r => r.id === wantedId);
+    }
+    if(!start) start = invs[0];
+
     if(!start){ $("page").innerHTML = `<div class="empty">No invoices found.</div>`; setStatus(""); return; }
     sel.value = start.id;
     render(start.fields);
