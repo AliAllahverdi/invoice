@@ -53,7 +53,7 @@
   /* ---------- Sender / meta lines ---------- */
   .row{display:flex; gap:16px; margin:10px 0;}
   .row .lbl{min-width:170px; font-weight:700;}
-  .center-block{text-align:center; font-weight:700; line-height:1.4;}
+  .sender-name{margin-left:90px; font-weight:700; line-height:1.4;}
   .block{margin:10px 0;}
   .block b{font-weight:700;}
 
@@ -134,8 +134,7 @@ const CONFIG = {
 
 /* ============================================================
    STATİK GÖNDƏRƏN MƏLUMATLARI  (hələ dinamik deyil — buradan dəyişin)
-   LOGO:  logo.png faylını invoice.html ilə eyni qovluğa (repo-ya) qoyun,
-          aşağıda LOGO = "logo.png" qalsın. Şəkil avtomatik görünəcək.
+   LOGO:  logo faylını invoice.html ilə eyni qovluğa (repo-ya) qoyun.
    ============================================================ */
 const SENDER = {
   LOGO: "newmedia_logo.svg",
@@ -286,8 +285,6 @@ function render(f){
       <td>${esc(c["Campaign Name"]||"")}</td>
       <td class="num">${esc(cnt)}</td>
       <td class="num">${moneyAz(amt)}</td>
-      <td class="num">${esc(c["Tax %"]??"")}%</td>
-      <td class="num">${moneyAz(tax)}</td>
       <td class="num">${moneyAz(tot)}</td>
     </tr>`;
   }).join("");
@@ -308,7 +305,7 @@ function render(f){
 
     <div class="row">
       <div class="lbl">Mal / Xidmət göndərən:</div>
-      <div class="center-block" style="text-align:left">
+      <div class="sender-name">
         ${esc(SENDER.name)}<br>VÖEN ${esc(SENDER.voen)}
       </div>
     </div>
@@ -328,15 +325,13 @@ function render(f){
       <thead>
         <tr>
           <th class="num">№</th>
-          <th>MALLARIN (XİDMƏTLƏRİN) ADI</th>
+          <th>XİDMƏTLƏRİN ADI</th>
           <th class="num">MİQDAR</th>
           <th class="num">MƏBLƏĞ (${cur})</th>
-          <th class="num">ƏDV %</th>
-          <th class="num">ƏDV MƏBLƏĞİ (${cur})</th>
           <th class="num">YEKUN (${cur})</th>
         </tr>
       </thead>
-      <tbody>${body || `<tr><td colspan="7" style="text-align:center;color:#9ca3af;padding:24px">Sətir yoxdur</td></tr>`}</tbody>
+      <tbody>${body || `<tr><td colspan="5" style="text-align:center;color:#9ca3af;padding:24px">Sətir yoxdur</td></tr>`}</tbody>
     </table>
 
     <div class="totals">
