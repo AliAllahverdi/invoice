@@ -279,7 +279,7 @@ function render(f){
   const body = rows.map((c,i)=>{
     const amt=Number(c["Amount (AZN)"]||0), tax=Number(c["Tax amount (AZN)"]||0),
           //tot=Number(c["Total Amount (AZN)"]||amt+tax), cnt=c["Count"]??1;
-          tot=Number(c["Total Amount (AZN)"]||amt), cnt=c["Count"]??1;
+          tot=amt, cnt=c["Count"]??1;
     subTotal+=amt; taxTotal+=tax;
     return `<tr>
       <td class="num">${i+1}</td>
