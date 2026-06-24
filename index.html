@@ -327,8 +327,8 @@ function render(f){
           <th class="num">№</th>
           <th>XİDMƏTLƏRİN ADI</th>
           <th class="num">MİQDAR</th>
+          <th class="num">QİYMƏT (${cur})</th>
           <th class="num">MƏBLƏĞ (${cur})</th>
-          <th class="num">YEKUN (${cur})</th>
         </tr>
       </thead>
       <tbody>${body || `<tr><td colspan="5" style="text-align:center;color:#9ca3af;padding:24px">Sətir yoxdur</td></tr>`}</tbody>
@@ -349,7 +349,7 @@ function render(f){
 
     <div class="sign">
       <div>Direktor</div>
-      <div>${esc(SENDER.director)}</div>
+      <div style='padding: 20px'>${esc(SENDER.director)}</div>
     </div>
   `;
 }
