@@ -7,7 +7,7 @@
 <style>
   :root{
     --ink:#1a1a1a; --muted:#6b7280; --line:#e5e7eb; --head:#111827;
-    --accent:#111827; --paper:#ffffff; --pagew:210mm;
+    --accent:#111827; --paper:#ffffff; --pagew:210mm; --brand:#5b3fd9;
   }
   *{box-sizing:border-box;}
   body{
@@ -45,7 +45,7 @@
   .head{display:flex; justify-content:space-between; align-items:flex-start; gap:24px;}
   .brand{display:flex; align-items:center; gap:14px;}
   .brand img{width:54px; height:54px; object-fit:contain;}
-  .brand .name{font-size:20px; font-weight:700;}
+  .brand .name{font-size:20px; font-weight:700; color:var(--brand);}
   .brand .person{font-size:12px; color:var(--muted);}
   .doc h1{margin:0; font-size:26px; letter-spacing:1px; text-align:right; color:var(--head);}
   .doc .num{text-align:right; color:var(--muted); margin-top:2px;}
@@ -89,6 +89,19 @@
     border-top:2px solid var(--head); font-size:16px; padding-top:10px;
   }
   .totals tr.grand td.v{font-weight:800;}
+
+  /* ---------- Comments / signature ---------- */
+  .bottom{display:flex; justify-content:space-between; gap:32px; margin-top:32px;}
+  .bottom .col{flex:1;}
+  .bottom h3{
+    margin:0 0 8px; font-size:11px; text-transform:uppercase;
+    letter-spacing:.6px; color:var(--brand); font-weight:700;
+  }
+  .bottom p{margin:0; color:#374151; white-space:pre-wrap;}
+  .sig-box{
+    margin-top:4px; min-height:80px; border:1px solid var(--line);
+    border-radius:8px; background:#f7f5fc;
+  }
 
   /* ---------- Terms ---------- */
   .terms{margin-top:34px; padding-top:14px; border-top:1px solid var(--line);}
@@ -139,8 +152,10 @@ const CONFIG = {
   T_CLIENTS:  "tblmSmQm9EOvhThoO",
   T_COMPANY:  "tblqR2FsfeuX6S8t5",
   DOC_TITLE:  "INVOICE",         // header word; change to "QUOTE" if preferred
-  CURRENCY:   "AZN"              // line-item / totals currency label
+  CURRENCY:   "AZN",             // line-item / totals currency label
+  BRAND_COLOR:"#5b3fd9"          // company-name accent color — change freely
 };
+document.documentElement.style.setProperty("--brand", CONFIG.BRAND_COLOR);
 
 const API = `https://api.airtable.com/v0/${CONFIG.BASE}`;
 const H = { Authorization:`Bearer ${CONFIG.TOKEN}` };
@@ -179,14 +194,27 @@ function first(v){ return Array.isArray(v) ? v[0] : v; }
 
 let CAMPAIGNS = {}, CLIENTS = {}, COMPANIES = {};
 
+async function fetchAllLabeled(label, tableId){
+  try{
+    return await fetchAll(tableId);
+  }catch(err){
+    throw new Error(`[${label}] ${err.message}`);
+  }
+}
+
 async function init(){
+  if(location.protocol === "file:"){
+    $("page").innerHTML = `<div class="empty">This page was opened directly from disk (file://).<br>Browsers block API requests in that mode — open it through your live GitHub Pages URL instead.</div>`;
+    setStatus("Blocked: file://");
+    return;
+  }
   try{
     setStatus("Loading data…");
     const [invs, camps, clients, comps] = await Promise.all([
-      fetchAll(CONFIG.T_INVOICES),
-      fetchAll(CONFIG.T_CAMPAIGNS),
-      fetchAll(CONFIG.T_CLIENTS),
-      fetchAll(CONFIG.T_COMPANY),
+      fetchAllLabeled("Invoices", CONFIG.T_INVOICES),
+      fetchAllLabeled("Campaigns", CONFIG.T_CAMPAIGNS),
+      fetchAllLabeled("Clients", CONFIG.T_CLIENTS),
+      fetchAllLabeled("Company", CONFIG.T_COMPANY),
     ]);
     CAMPAIGNS = byId(camps); CLIENTS = byId(clients); COMPANIES = byId(comps);
 
@@ -237,6 +265,8 @@ function render(f){
   const companyName = company["Your business name"] || "";
   const person = company["Your first and last name"] || first(f["(Hidden) Your first and last name"]) || "";
   const terms = company["Your Terms and Conditions"] || first(f["(Hidden) Your Terms and Conditions"]) || "";
+  const comments = f["Comments"] || f["(Hidden) Comments"] || "";
+  const discountPct = Number(f["Discount %"] ?? f["(Hidden) Discount %"] ?? 0) || 0;
 
   // line items in invoice order
   const ids = f.Campaign || [];
@@ -256,7 +286,9 @@ function render(f){
       <td class="num">${money(tot)}</td>
     </tr>`;
   }).join("");
-  const grand = Number(f["Total Amount (AZN)"] ?? (subTotal+taxTotal));
+  const discountAmount = subTotal * discountPct / 100;
+  const subAfterDiscount = subTotal - discountAmount;
+  const grand = Number(f["Total Amount (AZN)"] ?? (subAfterDiscount + taxTotal));
 
   const status = (f["Payment Status"]||"").toLowerCase();
   const badgeCls = status==="paid"?"paid":(status==="unpaid"||status==="overdue")?"unpaid":"other";
@@ -310,9 +342,23 @@ function render(f){
     <div class="totals">
       <table>
         <tr><td class="k">Subtotal (excl. tax)</td><td class="v">${money(subTotal)} ${cur}</td></tr>
+        ${discountPct > 0 ? `
+        <tr><td class="k">Discount ${discountPct}%</td><td class="v">- ${money(discountAmount)} ${cur}</td></tr>
+        <tr><td class="k">Subtotal (after discount)</td><td class="v">${money(subAfterDiscount)} ${cur}</td></tr>
+        ` : ``}
         <tr><td class="k">Tax</td><td class="v">${money(taxTotal)} ${cur}</td></tr>
         <tr class="grand"><td class="k">Total</td><td class="v">${money(grand)} ${cur}</td></tr>
       </table>
+    </div>
+
+    <div class="bottom">
+      <div class="col">
+        ${comments?`<h3>Comment(s)</h3><p>${esc(comments)}</p>`:""}
+      </div>
+      <div class="col">
+        <h3>Client's signature</h3>
+        <div class="sig-box"></div>
+      </div>
     </div>
 
     ${terms?`<div class="terms"><h3>Terms &amp; Conditions</h3><p>${esc(terms)}</p></div>`:""}
