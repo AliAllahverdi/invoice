@@ -53,8 +53,8 @@
   /* ---------- Sender / meta lines ---------- */
   .row{display:flex; gap:16px; margin:10px 0;}
   .row .lbl{min-width:170px; font-weight:700;}
-  .sender-name{margin-left:329px; font-weight:700; line-height:1.4;}
-  .block{margin:23px 0;}
+  .center-block{text-align:center; font-weight:700; line-height:1.4;}
+  .block{margin:10px 0;}
   .block b{font-weight:700;}
 
   .title{text-align:center; margin:26px 0 4px; font-size:20px; font-weight:700;}
@@ -84,7 +84,7 @@
   .summary .words{font-weight:700; margin-top:2px;}
 
   /* ---------- Signature ---------- */
-  .sign{margin-top:40px; padding-top:26px; border-top:1px solid #333;
+  .sign{margin-top:40px; padding-top:14px; border-top:1px solid #333;
         display:flex; justify-content:space-between; font-weight:700;}
 
   .empty{padding:60px; text-align:center; color:var(--muted); font-family:Arial,sans-serif;}
@@ -105,8 +105,8 @@
 <body>
 
   <div class="toolbar">
-    <!-- <label for="invSel">Hesab</label>
-    <select id="invSel"></select> -->
+    <label for="invSel">Hesab</label>
+    <select id="invSel"></select>
     <button id="printBtn">Çap / PDF</button>
     <span class="status" id="status">Yüklənir…</span>
   </div>
@@ -134,7 +134,8 @@ const CONFIG = {
 
 /* ============================================================
    STATİK GÖNDƏRƏN MƏLUMATLARI  (hələ dinamik deyil — buradan dəyişin)
-   LOGO:  logo faylını invoice.html ilə eyni qovluğa (repo-ya) qoyun.
+   LOGO:  logo.png faylını invoice.html ilə eyni qovluğa (repo-ya) qoyun,
+          aşağıda LOGO = "logo.png" qalsın. Şəkil avtomatik görünəcək.
    ============================================================ */
 const SENDER = {
   LOGO: "newmedia_logo.svg",
@@ -149,7 +150,7 @@ const SENDER = {
 const API = `https://api.airtable.com/v0/${CONFIG.BASE}`;
 const H = { Authorization:`Bearer ${CONFIG.TOKEN}` };
 const $ = id => document.getElementById(id);
-const setStatus = m => { const el=$("status"); if(el) el.textContent = m; };
+const setStatus = m => $("status").textContent = m;
 
 async function apiGet(path){
   const r = await fetch(`${API}/${path}`, { headers:H });
@@ -223,7 +224,7 @@ let CAMPAIGNS={}, CLIENTS={}, COMPANIES={};
 
 async function init(){
   if(location.protocol==="file:"){
-    const p=$("page"); if(p) p.innerHTML=`<div class="empty">Bu səhifə birbaşa diskdən (file://) açılıb.<br>Brauzer bu rejimdə API sorğularını bloklayır — canlı GitHub Pages linkindən açın.</div>`;
+    $("page").innerHTML=`<div class="empty">Bu səhifə birbaşa diskdən (file://) açılıb.<br>Brauzer bu rejimdə API sorğularını bloklayır — canlı GitHub Pages linkindən açın.</div>`;
     setStatus("Bloklandı: file://"); return;
   }
   try{
@@ -236,17 +237,13 @@ async function init(){
     ]);
     CAMPAIGNS=byId(camps); CLIENTS=byId(clients); COMPANIES=byId(comps);
 
-    invs.sort((a,b)=>String(b.fields["Invoice Number"]||"").localeCompare(String(a.fields["Invoice Number"]||"")));
-
-    // Dropdown opsionaldir — toolbar-da #invSel varsa doldurulur, yoxdursa ötürülür
     const sel=$("invSel");
-    if(sel){
-      sel.innerHTML=invs.map(r=>{
-        const f=r.fields, c=CLIENTS[first(f.Client)]?.["Client Name"]||"";
-        return `<option value="${r.id}">${esc(f["Invoice Number"]||r.id)} — ${esc(c)}</option>`;
-      }).join("");
-      sel.onchange=()=>{ const r=invs.find(x=>x.id===sel.value); if(r) render(r.fields); };
-    }
+    invs.sort((a,b)=>String(b.fields["Invoice Number"]||"").localeCompare(String(a.fields["Invoice Number"]||"")));
+    sel.innerHTML=invs.map(r=>{
+      const f=r.fields, c=CLIENTS[first(f.Client)]?.["Client Name"]||"";
+      return `<option value="${r.id}">${esc(f["Invoice Number"]||r.id)} — ${esc(c)}</option>`;
+    }).join("");
+    sel.onchange=()=>{ const r=invs.find(x=>x.id===sel.value); render(r.fields); };
 
     const qs=new URLSearchParams(location.search);
     const wantedNumber=qs.get("number");
@@ -254,25 +251,23 @@ async function init(){
     let start=null;
     if(wantedNumber){
       start=invs.find(r=>String(r.fields["Invoice Number"]||"").trim().toLowerCase()===wantedNumber.trim().toLowerCase());
-      if(!start){ const p=$("page"); if(p) p.innerHTML=`<div class="empty">Hesab tapılmadı: <b>${esc(wantedNumber)}</b></div>`; setStatus("Tapılmadı"); return; }
+      if(!start){ $("page").innerHTML=`<div class="empty">Hesab tapılmadı: <b>${esc(wantedNumber)}</b></div>`; setStatus("Tapılmadı"); return; }
     } else if(wantedId){
       start=invs.find(r=>r.id===wantedId);
     }
     if(!start) start=invs[0];
-    if(!start){ const p=$("page"); if(p) p.innerHTML=`<div class="empty">Heç bir hesab tapılmadı.</div>`; setStatus(""); return; }
-    if(sel) sel.value=start.id;
+    if(!start){ $("page").innerHTML=`<div class="empty">Heç bir hesab tapılmadı.</div>`; setStatus(""); return; }
+    sel.value=start.id;
     render(start.fields);
     setStatus(`${invs.length} hesab yükləndi`);
   }catch(e){
     setStatus("Xəta");
-    const p=$("page"); if(p) p.innerHTML=`<div class="empty">Yüklənmə alınmadı.<br><small>${esc(e.message)}</small></div>`;
+    $("page").innerHTML=`<div class="empty">Yüklənmə alınmadı.<br><small>${esc(e.message)}</small></div>`;
     console.error(e);
   }
 }
 
 function render(f){
-  const page=$("page");
-  if(!page) return;
   const client = CLIENTS[first(f.Client)] || {};
 
   const company = COMPANIES[first(f["Your company"])] || {};
@@ -284,13 +279,15 @@ function render(f){
   let subTotal=0, taxTotal=0;
   const body = rows.map((c,i)=>{
     const amt=Number(c["Amount (AZN)"]||0), tax=Number(c["Tax amount (AZN)"]||0),
-          tot=amt, cnt=c["Count"]??1;   // YEKUN/MƏBLƏĞ = yalnız amt (ƏDV-siz)
+          tot=Number(c["Total Amount (AZN)"]||amt+tax), cnt=c["Count"]??1;
     subTotal+=amt; taxTotal+=tax;
     return `<tr>
       <td class="num">${i+1}</td>
       <td>${esc(c["Campaign Name"]||"")}</td>
       <td class="num">${esc(cnt)}</td>
       <td class="num">${moneyAz(amt)}</td>
+      <td class="num">${esc(c["Tax %"]??"")}%</td>
+      <td class="num">${moneyAz(tax)}</td>
       <td class="num">${moneyAz(tot)}</td>
     </tr>`;
   }).join("");
@@ -302,7 +299,7 @@ function render(f){
   const payerName = client["Client Name"] || "";
   const payerVoen = client["Client VOEN"] || "";
 
-  page.innerHTML = `
+  $("page").innerHTML = `
     <div class="logo-wrap">
       ${logoSrc
         ? `<img src="${esc(logoSrc)}" alt="${esc(SENDER.name)}" onerror="this.replaceWith(Object.assign(document.createElement('div'),{className:'logo-fallback',textContent:${JSON.stringify(SENDER.name)}}))">`
@@ -311,7 +308,7 @@ function render(f){
 
     <div class="row">
       <div class="lbl">Mal / Xidmət göndərən:</div>
-      <div class="sender-name">
+      <div class="center-block" style="text-align:left">
         ${esc(SENDER.name)}<br>VÖEN ${esc(SENDER.voen)}
       </div>
     </div>
@@ -331,13 +328,15 @@ function render(f){
       <thead>
         <tr>
           <th class="num">№</th>
-          <th>XİDMƏTLƏRİN ADI</th>
+          <th>MALLARIN (XİDMƏTLƏRİN) ADI</th>
           <th class="num">MİQDAR</th>
-          <th class="num">QİYMƏT (${cur})</th>
           <th class="num">MƏBLƏĞ (${cur})</th>
+          <th class="num">ƏDV %</th>
+          <th class="num">ƏDV MƏBLƏĞİ (${cur})</th>
+          <th class="num">YEKUN (${cur})</th>
         </tr>
       </thead>
-      <tbody>${body || `<tr><td colspan="5" style="text-align:center;color:#9ca3af;padding:24px">Sətir yoxdur</td></tr>`}</tbody>
+      <tbody>${body || `<tr><td colspan="7" style="text-align:center;color:#9ca3af;padding:24px">Sətir yoxdur</td></tr>`}</tbody>
     </table>
 
     <div class="totals">
@@ -360,16 +359,8 @@ function render(f){
   `;
 }
 
-function start(){
-  const btn = $("printBtn");
-  if(btn) btn.onclick = ()=>window.print();
-  init();
-}
-if(document.readyState === "loading"){
-  document.addEventListener("DOMContentLoaded", start);
-}else{
-  start();
-}
+$("printBtn").onclick = ()=>window.print();
+init();
 </script>
 </body>
 </html>
