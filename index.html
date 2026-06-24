@@ -1,3 +1,726 @@
+
+Claude finished the response
+1782296203723_image.png
+
+<!DOCTYPE html> <html lang="en"> <head> <meta charset="UTF-8"> <meta name="viewport" content="width=device-width, initial-scale=1.0"> <title>Invoice Viewer</title> <style> body{ font-family: Arial; background:#f5f6f8; padding:30px; } .invoice{ max-width:1000px; margin:auto;
+
+pasted
+
+bu sekle bax. bu sekle uygun butun datalari menim html-im icinde duzelt. demeli  const TABLE = "📄 Invoices"; tablesinden datani cekerken asagidaki query -ni ne nezere al. bu script invoice tablesi icindeki campaigns tablesindeki datalari grid icine doldurur. xahis edirem bunu duzgun html ile mene ver.
+
+const invoiceTable = base.getTable("📄 Invoices");
+
+
+// Interface-dən record seçmək üçün
+const record = await input.recordAsync(
+    "Select invoice record",
+    invoiceTable
+);
+
+
+if (!record) {
+    throw new Error("Invoice seçilmədi");
+}
+
+
+// Invoice Number
+const invoice_number = record.getCellValueAsString("Invoice Number");
+
+
+if (!invoice_number) {
+    throw new Error("Invoice Number yoxdur");
+}
+
+const campaignsTable = base.getTable("📢 Campaigns");
+
+
+// FIND INVOICE
+
+const invoiceQuery = await invoiceTable.selectRecordsAsync({
+    fields: [
+        "Invoice Number",
+        "Client",
+        "Issue Date",
+        "Due Date",
+        "Total Amount (AZN)",
+        "Campaign"
+    ]
+});
+
+
+const invoice = invoiceQuery.records.find(record =>
+    record.getCellValueAsString("Invoice Number") === String(invoice_number)
+);
+
+
+if (!invoice) {
+    throw new Error(
+        "Invoice tapilmadi: " + invoice_number
+    );
+}
+
+
+console.log("Invoice:", invoice.id);
+
+
+// INVOICE DATA
+
+const invoiceNumber =
+    invoice.getCellValueAsString("Invoice Number") || "";
+
+const client =
+    invoice.getCellValueAsString("Client") || "";
+
+const issueDate =
+    invoice.getCellValueAsString("Issue Date") || "";
+
+const dueDate =
+    invoice.getCellValueAsString("Due Date") || "";
+
+const total =
+    invoice.getCellValueAsString("Total Amount (AZN)") || "";
+
+
+
+// GET LINKED CAMPAIGNS FROM INVOICE
+
+const linkedCampaigns =
+    invoice.getCellValue("Campaign") || [];
+
+
+console.log("Campaign links:", linkedCampaigns);
+
+
+
+// GET CAMPAIGN DATA
+
+const campaignsQuery = await campaignsTable.selectRecordsAsync({
+    fields: [
+        "Campaign Name"
+    ]
+});
+
+
+
+let rows = "";
+
+
+
+for (const campaignLink of linkedCampaigns) {
+
+
+    const campaign = campaignsQuery.records.find(
+        record => record.id === campaignLink.id
+    );
+
+
+    if (campaign) {
+
+        const campaignName =
+            campaign.getCellValueAsString("Campaign Name") || "";
+
+
+        rows += `
+        <tr>
+            <td>${campaignName}</td>
+            <td></td>
+            <td></td>
+        </tr>
+        `;
+
+    }
+
+}
+
+
+
+
+// HTML
+
+const html = `
+
+<!DOCTYPE html>
+
+<html>
+
+<head>
+
+<meta charset="UTF-8">
+
+<style>
+
+@page {
+    size: A4;
+    margin:20mm;
+}
+
+
+body {
+    font-family: Arial, sans-serif;
+    font-size:14px;
+}
+
+
+h1 {
+    text-align:center;
+}
+
+
+table {
+    width:100%;
+    border-collapse:collapse;
+    margin-top:20px;
+}
+
+
+th {
+    background:#eeeeee;
+}
+
+
+th, td {
+    border:1px solid #ccc;
+    padding:8px;
+}
+
+
+thead {
+    display:table-header-group;
+}
+
+
+tr {
+    page-break-inside:avoid;
+}
+
+
+.total {
+    margin-top:30px;
+    text-align:right;
+    font-size:18px;
+}
+
+</style>
+
+</head>
+
+
+<body>
+
+
+<h1>INVOICE</h1>
+
+
+<p>
+<b>Invoice Number:</b>
+${invoiceNumber}
+</p>
+
+
+<p>
+<b>Client:</b>
+${client}
+</p>
+
+
+<p>
+<b>Issue Date:</b>
+${issueDate}
+</p>
+
+
+<p>
+<b>Due Date:</b>
+${dueDate}
+</p>
+
+
+
+<table>
+
+<thead>
+
+<tr>
+<th>Campaign</th>
+<th>Description</th>
+<th>Amount</th>
+</tr>
+
+</thead>
+
+
+<tbody>
+
+${rows}
+
+</tbody>
+
+
+</table>
+
+
+
+<div class="total">
+
+<b>Total:</b>
+${total} AZN
+
+</div>
+
+
+</body>
+
+</html>
+
+`;
+
+
+
+await invoiceTable.updateRecordAsync(invoice.id, {
+    "Invoice HTML": html
+});
+
+output.text("Invoice hazırlandı");
+Show more
+2:18 PM
+
+Architected HTML invoice viewer matching screenshot with Airtable integration
+Architected HTML invoice viewer matching screenshot with Airtable integration
+Şəkildəki düzənə uyğun yenilədim. Bir neçə vacib qeyd:
+
+1. Kampaniya sətirlərinin mənbəyi düzəldildi. Köhnə kodda Campaign sahəsi REST API üzərindən sadəcə linklənmiş record ID-ləri qaytarır, ad yox — ona görə cədvəldə kampaniya adları əvəzinə ID-lər çıxırdı. İndi əvvəlcə invoice-u çəkir, sonra həmin ID-lərlə 📢 Campaigns cədvəlinə ikinci sorğu göndərib Campaign Name, Count, Amount (AZN), Tax %, Tax Amount (AZN), Total Amount (AZN) sahələrini gətirir — sizin TypeScript skriptindəki məntiqin REST API versiyası.
+
+2. Sahə adları barədə təxmin. Şəkildəki Client ID, Payment Method, Payment Terms, From, Comments, Bank Details, həmçinin Campaigns cədvəlindəki Count/Amount (AZN)/Tax %/Tax Amount (AZN) sahələri sizin skriptdə yox idi — adları şəkilə əsasən təxmin etdim (faylın yuxarısında F_INVOICE və F_CAMPAIGN obyektlərində). Əgər Airtable-da bu sahələr fərqli adlanırsa, sadəcə bu siyahıda dəyişin.
+
+3. Şəkildə diqqətimi çəkən şey: "Quote date" yerində boz zolaq və "FIELD DELETED" yazısı var — bu, Airtable-ın özünün verdiyi xəbərdarlıqdır və o sahənin bazadan silindiyini göstərir. Mən "Quote date"-i Issue Date sahəsinə bağladım, amma əsl bazada həmin sahəni yoxlamağınızı tövsiyə edirəm, əks halda bu hissə boş/səhv görünə bilər.
+
+4. Təhlükəsizlik xəbərdarlığı (vacib): Kodda Airtable Personal Access Token-i açıq şəkildə client-side HTML-də qalır. Bu o deməkdir ki, hər kəs "View Source" edib tokeni görə və bazanıza həmin token-in icazələri daxilində oxuma/yazma edə bilər. Tövsiyə:
+
+Bu token-i artıq başqaları görmüş ola bilər (mənə də göndərdiniz) — rotasiya edin (Airtable-da yeni token yaradıb köhnəsini silin).
+Mümkünsə tokeni brauzerdən tam gizlədin: kiçik bir backend/serverless funksiya (Cloudflare Worker, Vercel function və s.) vasitəsilə Airtable-a sorğu göndərin, frontend isə yalnız öz backend-inizə müraciət etsin.
+Token-in scope-unu minimuma endirin (yalnız bu bazaya, yalnız data.records:read).
+Fayl hazırdır — açıb test edə bilərsiniz, sahə adlarını öz bazanıza uyğunlaşdırmaq kifayətdir.
+
+
+Invoice viewer
+Code · HTML 
+
+<!DOCTYPE html> <html lang="en"> <head> <meta charset="UTF-8" /> <meta name="viewport" content="width=device-width, initial-scale=1.0" /> <title>Invoice</title> <style> :root{ --ink:#1a1a1a; --muted:#6b7280; --line:#e5e7eb; --head:#111827; --accent:#111827; --paper:#ffffff; --pagew:210mm;
+
+pasted
+
+kod budur. her sey okdu. sadece bir problem var invoice number ile gedib tapib getirmelidir. okaydi? bu url sorgu atir, sinra qalanini koda duzelis et ki, mene melumatlari duzgun getirsin
+
+"https://aliallahverdi.github.io/invoice/?number=INV-2026-001"
+2:25 PM
+
+İnvoice numarası arama işlevi için düzeltme uygulandı
+İnvoice numarası arama işlevi için düzeltme uygulandı
+Düzəltdim — sadəcə init() funksiyasındakı seçim məntiqi dəyişdi:
+
+?number=INV-2026-001 indi Invoice Number sahəsinə görə axtarır (böyük/kiçik hərf fərqi olmadan) və tapılan invoice-u göstərir.
+Əgər həmin nömrə tapılmasa, səhvən başqa invoice göstərmir — "Invoice tapılmadı: ..." mesajı çıxır.
+Köhnə ?id=recXXXXXXXX (record ID ilə) də fallback kimi işləyir, number verilməyibsə.
+Heç biri verilməyibsə, ən son invoice (sıralamaya görə birinci) göstərilir, əvvəlki kimi.
+https://aliallahverdi.github.io/invoice/?number=INV-2026-001 linki indi düz işləməlidir. Qalan hər şeyə (toolbar, cədvəl, totals, terms) dəyişiklik etmədim.
+
+
+Invoice
+Code · HTML 
+Error: Error: Failed to fetch
+2:27 PM
+
+Diagnosed network error causes and devised debugging strategy
+Diagnosed network error causes and devised debugging strategy
+"Failed to fetch" is a generic browser-level error — it means the request never even completed (not a 401/404 from Airtable, those would show differently). The most common cause for exactly this symptom: opening the HTML file directly from your computer (double-clicking it) instead of viewing it through the live https://...github.io/... link. Browsers block fetch() calls to other domains when the page is loaded from file://.
+
+I added a check for that, plus made errors tell you which table failed (right now all 4 fetches run in parallel, so a wrong table ID anywhere just says "Failed to fetch" with no clue which one):
+
+
+Deliberated whether to probe local versus live testing environments
+Deliberated whether to probe local versus live testing environments
+Bunu sınadığınızda faylı bilavasitə kompüterdə açmısınız, yoxsa artıq GitHub Pages-dəki canlı linkdən (https://aliallahverdi.github.io/...) yoxlamısınız?
+
+Əgər canlı linkdəndirsə, problem başqa yerdədir — ən çox ehtimal olunanlar: token-i bu yaxınlarda dəyişmisiniz/ləğv etmisiniz, ya da 4 cədvəldən birinin ID-si (T_INVOICES/T_CAMPAIGNS/T_CLIENTS/T_COMPANY) səhvdir. İndi səhv mesajı artıq hansı cədvəlin uğursuz olduğunu göstərəcək (məs. [Clients] Failed to fetch), bu da diaqnozu asanlaşdırır.
+
+
+Invoice
+Code · HTML 
+1782296984843_image.png
+1782297084606_image.png
+1782297160485_image.png
+isledi. gozel. indi dizayni biraz gozellesdirek. 
+
+bu bizim hazirki pdf-dir. bir balaca dizayni seliqeye salaq. newmedia sozunu rengli edek. meselen ikinci sekildeki kimi. bir de alt hisseye bu melumatlari da elave edek. orda (Hidden) ile gelenler de var. yeni endirimler filan da var.  discount varsa gosterek yoxdursa gostermeyek meselen
+
+2:32 PM
+
+Planlaşdırıldı: brend rəngi, endirim sətirləri, şərh və imza bölməsi
+Planlaşdırıldı: brend rəngi, endirim sətirləri, şərh və imza bölməsi
+Now adding CSS for the new comments/signature block:
+
+
+Add CSS for the new comments + client signature block
+Add CSS for the new comments + client signature block
+Now updating the JS — apply brand color to a CSS var if customized via CONFIG (so it's a one-line tweak), and add discount + comments logic:
+
+
+Planlaşdırıldı render funksiyasına endirim və cəmi məlumatları əlavə etmə
+Planlaşdırıldı render funksiyasına endirim və cəmi məlumatları əlavə etmə
+Now updating the totals table to conditionally show discount, and adding the comments/signature block:
+
+
+Show discount row only when present, and add the comments/signature block
+Show discount row only when present, and add the comments/signature block
+Now let's verify the full file and copy it to outputs:
+
+
+Verify the final edited file
+Verify the final edited file
+Looks good. Copying to outputs and sharing:
+
+
+Ran a command, read a file
+Ran a command, read a file
+Etdiyim dəyişikliklər:
+
+"Nyu Media" rəngləndi — --brand adlı CSS dəyişəni əlavə etdim, CONFIG.BRAND_COLOR ilə idarə olunur (indi 
+#5b3fd9, bənövşəyi-mavi). İstənilən vaxt CONFIG blokundakı bu sətri dəyişməklə rəngi dəyişə bilərsiniz, CSS-ə girmədən.
+Discount (endirim) — Discount % (və ya (Hidden) Discount %) sahəsi yoxlanılır. Əgər dəyər 0-dan böyükdürsə, 3-cü şəkildəki kimi Subtotal → Discount X% → Subtotal (after discount) sətirləri görünür. Əks halda heç nə dəyişmir, sadəcə adi Subtotal/Tax/Total qalır.
+Comment(s) — Comments (və ya (Hidden) Comments) sahəsi varsa, totals-dan sonra solda göstərilir; boşdursa heç nə çıxmır.
+Client's signature — sağda boş bir imza qutusu əlavə etdim (data tələb etmir, sadəcə fiziki imza üçün boşluq, 3-cü şəkildəki kimi).
+⚠️ Qeyd: Discount % və Comments sahə adlarını şəkillərə əsasən təxmin etdim — Airtable bazanızda fərqli adlanırsa, kodda bu iki sətri uyğunlaşdırmaq kifayətdir:
+
+js
+const comments = f["Comments"] || f["(Hidden) Comments"] || "";
+const discountPct = Number(f["Discount %"] ?? f["(Hidden) Discount %"] ?? 0) || 0;
+
+Invoice
+Code · HTML 
+1782303701289_image.png
+1782303713733_image.png
+indi sene yeni dizayni atiram. demeli nyu media yazisi yerine logo var o istifade edilmelidir. ne etmeliyem bunun ucun mene de. bir de dizaynda bu datalar dinamik yoxdur hele ona gore statik elave edeceksen.  qalan meseleler her sey azerbaycan dilinde olacaq. campaigne yerine meselen mallarin (xidmetlerin) adi ve s yazacaq. item hissesi oldugu kimi datalar qalir. ikinci sekilde yeni dizayndi. ama item grid hissesindeki rengi saxla. gozel gorunur. row renglerini de saxla yaxsi gorunur. sadece xetlerle bir birinden ayrilsin yeni dizayndaki kimi. bir de sekli hara yerlesdirim goturub isledesen?
+
+Mal göndərənin rekvizitləri: KapitalBank ASC,Port Baku filialı , VÖEN: 9900003611, H/H: AZ90AIIB40060019440435186107, M/H: AZ37NABZ01350100000000001944 , Kod: 201973, SWIFT: AIIBAZ2XXXX
+
+20 Fevral, 2025 tarixli, AZRC/2025/19 nömrəli müqaviləyə əsasən
+
+4:23 PM
+
+Azerbaycan dilində rəsmi hesab dizaynını yenidən qurdu
+Azerbaycan dilində rəsmi hesab dizaynını yenidən qurdu
+Anladım. Yeni Azərbaycan dilli "HESAB" dizaynını qururam — item cədvəlinin tünd başlığını və alternativ sətir rənglərini saxlayıram, üstünə isə yeni dizayndakı kimi xətlər (tam border) əlavə edirəm. Statik şirkət rekvizitlərini SENDER blokuna qoyuram ki, asanlıqla dəyişəsiniz. Loqo barədə də aşağıda izah edəcəm.
+
+Faylı təmiz şəkildə yenidən qururam:
+
+
+Düzəltdi UTF-8 kodlaşdırması üçün Azərbaycanca xüsusi simvolları
+Düzəltdi UTF-8 kodlaşdırması üçün Azərbaycanca xüsusi simvolları
+ASCII transliterasiya çıxdı — düzgün Azərbaycan hərfləri (ə, ç, ş, ğ, ö, ü, İ) lazımdır. Python ilə düzgün UTF-8 versiyasını yazıram:
+
+
+Təsdiqlədi JavaScript sintaksisini və faylı təqdim etməyə qərar verdi
+Təsdiqlədi JavaScript sintaksisini və faylı təqdim etməyə qərar verdi
+JS düzgün parse olunur, Azərbaycan hərfləri yerindədir. Faylı təqdim edirəm:
+
+
+Presented file
+Presented file
+Hazırdır. Yeni Azərbaycan dilli HESAB dizaynı qurdum.
+
+Loqonu necə yerləşdirməli (ən vacib sual)
+Ən sadə və etibarlı yol — loqo şəklini GitHub repo-nuza, invoice.html ilə eyni qovluğa qoymaq:
+
+Loqo faylını logo.png adlandırın (PNG/şəffaf fon ideal olar).
+Onu repo-da invoice.html-in yanına qoyun (commit + push).
+Kodda heç nə dəyişmək lazım deyil — SENDER.LOGO = "logo.png" artıq belə qurulub. Şəkil avtomatik başlıqda görünəcək.
+Əgər fərqli ad/format istəyirsinizsə (məs. logo.svg), SENDER blokunda sadəcə LOGO: "logo.svg" yazın.
+
+⚠️ Niyə Airtable loqosunu istifadə etmədim: Airtable attachment URL-ləri indi müvəqqətidir (bir neçə saatdan sonra etibarsız olur), ona görə publik səhifədə loqo zamanla "qırıla" bilər. Repo-dakı şəkil həmişəlik işləyir. Yenə də fallback kimi Airtable loqosu və mətn versiyası kodda saxlanılıb — şəkil tapılmasa, "Nyu Media.az" MMC mətni göstərilir.
+
+Nə dinamik, nə statik
+Dinamik (Airtable-dən): HESAB №, tarix (AZ formatında "23 İyun, 2026-ci il"), Ödəyən müştəri + VÖEN, bütün sətirlər (kampaniyalar), Məbləğ / ƏDV / Yekun, "Cəmi N sətir" və "Yazı ilə" (məbləğ avtomatik sözə çevrilir).
+
+Statik (SENDER blokunda — asanlıqla dəyişin): şirkət adı + VÖEN, ünvan, bank rekvizitləri, müqavilə sətri, direktorun adı.
+
+Cədvəl haqqında
+Tünd başlıq rəngini və alternativ sətir rənglərini saxladım, üstünə isə yeni dizayndakı kimi tam xətlər (hər xanaya border) əlavə etdim. Sütunlar Azərbaycanca: № / MALLARIN (XİDMƏTLƏRİN) ADI / MİQDAR / MƏBLƏĞ / ƏDV % / ƏDV MƏBLƏĞİ / YEKUN. Bütün data olduğu kimi qalır.
+
+Diqqət edilməli sahə adları
+İki məqama nəzər yetirin Airtable bazanızda:
+
+HESAB № üçün: kodda əvvəlcə Hesab № sahəsi, o yoxdursa Invoice Number istifadə olunur. Şəkildə "2493" göründü, amma Invoice Number "INV-2026-001"-dir. Əgər ayrıca "Hesab №" sahəniz varsa, avtomatik onu götürəcək; yoxdursa Invoice Number çıxacaq.
+"Yazı ilə" məbləği avtomatik hesablanır (məs. "Dörd min iki yüz əlli beş AZN 97"). Düzgünlüyünü ilk hesabda bir yoxlayın.
+
+Invoice
+Code · HTML 
+1782304555746_image.png
+mal/xidmet gonderen hissesinde nyu media biraz saga surussun. bir de grid icinde edv ve edv azn meselerini yigisdiraq
+
+4:36 PM
+
+Thought for 1s
+Thought for 1s
+Claude's response was interrupted.
+
+<!DOCTYPE html> <html lang="az"> <head> <meta charset="UTF-8" /> <meta name="viewport" content="width=device-width, initial-scale=1.0" /> <title>Hesab</title> <style> :root{ --ink:#1a1a1a; --muted:#555; --line:#bbb; --head:#111827; --paper:#ffffff; --pagew:210mm; --brand:#1f8a8a; } *{b
+
+pasted
+
+4:37 PM
+
+I notice the user prompt is empty, so I cannot determine the primary language or provide an appropriate summary. Please provide the user prompt so I can create an accurate summary in the correct language
+I notice the user prompt is empty, so I cannot determine the primary language or provide an appropriate summary. Please provide the user prompt so I can create an accurate summary in the correct language
+İki dəyişiklik: şirkət adını sağa sürüşdürürəm və grid-dən ƏDV % və ƏDV MƏBLƏĞİ sütunlarını çıxarıram (ƏDV onsuz da aşağıdakı yekun blokunda qalır). Sizin son versiyanız (logo newmedia_logo.svg) əsasında yenidən qururam:
+
+
+Rebuild with sender name shifted right and tax columns removed from the grid
+Rebuild with sender name shifted right and tax columns removed from the grid
+ƏDV % artıq grid-də yoxdur (0 nəticə), şirkət adı sağa sürüşdü, JS düzgün parse olunur. Faylı təqdim edirəm:
+
+
+Presented file
+Presented file
+İki dəyişiklik tamamdır:
+
+"Nyu Media.az" MMC sağa sürüşdü — şirkət adı blokuna margin-left:90px əlavə etdim, indi etiketdən daha aralı, sağda görünür. Daha çox/az istəyirsinizsə, CSS-də .sender-name{margin-left:90px} dəyərini dəyişin.
+Grid-dən ƏDV sütunları çıxarıldı — ƏDV % və ƏDV MƏBLƏĞİ (AZN) sütunları silindi. İndi cədvəl sadədir: № / MALLARIN (XİDMƏTLƏRİN) ADI / MİQDAR / MƏBLƏĞ (AZN) / YEKUN (AZN). ƏDV məbləği yenə də aşağıdakı yekun blokunda (Məbləğ → ƏDV məbləği → Yekun) qalır, ona görə ümumi ƏDV itmir, sadəcə hər sətirdə təkrarlanmır.
+Qalan hər şey əvvəlki kimidir.
+
+
+Invoice
+Code · HTML 
+bu hissede tax olmadan amt ozu gorunmelidir mebleg icinde yeni amt+tax yox sadece amt olmaliir
+
+const ids = f.Campaign || [];
+  const rows = ids.map(id=>CAMPAIGNS[id]).filter(Boolean);
+  let subTotal=0, taxTotal=0;
+  const body = rows.map((c,i)=>{
+    const amt=Number(c["Amount (AZN)"]||0), tax=Number(c["Tax amount (AZN)"]||0),
+          //tot=Number(c["Total Amount (AZN)"]||amt+tax), cnt=c["Count"]??1;
+          tot=Number(c["Total Amount (AZN)"]||amt), cnt=c["Count"]??1;
+    subTotal+=amt; taxTotal+=tax;
+    return <tr>
+      <td class="num">${i+1}</td>
+      <td>${esc(c["Campaign Name"]||"")}</td>
+      <td class="num">${esc(cnt)}</td>
+      <td class="num">${moneyAz(amt)}</td>
+      <td class="num">${moneyAz(tot)}</td>
+    </tr>;
+  }).join("");
+
+Show more
+5:17 PM
+
+Disentangled tax-inclusive field logic to enforce pre-tax amounts
+Disentangled tax-inclusive field logic to enforce pre-tax amounts
+Diqqət: sizin yazdığınız tot=Number(c["Total Amount (AZN)"]||amt) istədiyinizi tam etməyəcək — çünki Airtable-dakı Total Amount (AZN) sahəsi onsuz da amt+tax (məs. 110) dəyərini saxlayır, ona görə || amt yalnız sahə boş olanda işə düşür. YEKUN-un həmişə yalnız amt göstərməsi üçün onu birbaşa amt-ə bərabər etmək lazımdır.
+
+Bunu tətbiq edirəm:
+
+
+Edited a file, ran a command, read a file
+Edited a file, ran a command, read a file
+İndi YEKUN sütunu yalnız amt-i (ƏDV-siz məbləği) göstərir. ƏDV ümumi yekun blokunda (aşağıda "ƏDV məbləği" → "Yekun") qalır.
+
+Bir məqama diqqət: indi MƏBLƏĞ və YEKUN sütunları eyni dəyəri göstərir (hər ikisi amt), çünki cari datada MİQDAR həmişə 1-dir və hər ikisi amt-ə bağlıdır. Əgər bu təkrar görünüşü istəmirsinizsə, iki seçim var:
+
+YEKUN sütununu tamam çıxarmaq — yalnız MƏBLƏĞ qalsın.
+YEKUN = MİQDAR × MƏBLƏĞ etmək — miqdar 1-dən böyük olduqda fərqlənsin (yenə ƏDV-siz).
+Hansını istəyirsiniz, ya da indiki kimi qalsın?
+
+
+Invoice
+Code · HTML 
+Cannot set properties of null (setting 'innerHTML') xeta verir
+
+5:44 PM
+
+Diagnosed null reference error and devised DOM-ready safeguard solution
+Diagnosed null reference error and devised DOM-ready safeguard solution
+"Cannot set properties of null" o deməkdir ki, skript #page (və ya #status/#printBtn) elementi hələ DOM-da yaranmamış işə düşür və getElementById null qaytarır. Ən etibarlı həll — skripti DOM hazır olana qədər gözlətmək. Bunu əlavə edirəm:
+
+
+Defer init until DOM is ready and guard the print button binding so null elements never break it
+Defer init until DOM is ready and guard the print button binding so null elements never break it
+Also let me make the $ helper and the status setter null-safe, so a missing element can never throw:
+
+
+Make setStatus null-safe so a missing status element can't throw
+Make setStatus null-safe so a missing status element can't throw
+Claude's response was interrupted.
+
+<!DOCTYPE html> <html lang="az"> <head> <meta charset="UTF-8" /> <meta name="viewport" content="width=device-width, initial-scale=1.0" /> <title>Hesab</title> <style> :root{ --ink:#1a1a1a; --muted:#555; --line:#bbb; --head:#111827; --paper:#ffffff; --pagew:210mm; --brand:#1f8a8a; } *{b
+
+pasted
+
+kodu yenilenmis versiyasi
+
+5:45 PM
+
+Teşhis edildi: seçim kutusu null referans hatası ve çözüm tasarlandı
+Teşhis edildi: seçim kutusu null referans hatası ve çözüm tasarlandı
+Tapdım. Problemin səbəbi: toolbar-da <select id="invSel"> sətrini comment-ə aldınız, amma init() funksiyası hələ də həmin elementə müraciət edir:
+
+js
+const sel=$("invSel");      // artıq yoxdur → null
+sel.innerHTML = ...         // null.innerHTML → XƏTA
+Dropdown silindiyi üçün koddakı bütün sel istifadələrini optional etmək lazımdır. Sizin son versiyanızı götürüb həmin yeri (və DOM-hazır/null-təhlükəsizlik düzəlişlərini) tətbiq edirəm:
+
+
+Ran a command, read a file
+Ran a command, read a file
+Xəta düzəldi. Səbəb dropdown-u (<select id="invSel">) comment-ə almağınız idi, amma kod hələ də ona sel.innerHTML yazmağa çalışırdı — null.innerHTML xəta verirdi.
+
+Etdiyim düzəlişlər (bütün sizin son dəyişikliklərinizi — margin 329px, sütun adları QİYMƏT/MƏBLƏĞ, BASE ID, tot=amt — saxladım):
+
+Dropdown opsional oldu — if(sel){ ... } ilə əhatə etdim. Toolbar-da #invSel varsa doldurulur, yoxdursa (sizdəki kimi comment-də) sadəcə ötürülür. ?number=... linki yenə də işləyir.
+#page və #status üçün də null-yoxlama əlavə etdim — heç bir element çatmasa belə kod artıq qırılmır.
+DOM-hazır gözləməsi — skript indi DOMContentLoaded-i gözləyir, ona görə elementlər yaranmadan işə düşüb xəta vermir.
+İndi ?number=INV-2026-001 ilə açanda birbaşa o hesab görünməlidir, dropdown olmadan da.
+
+Bir qeyd: BASE ID-ni appZtOpvO1geJ9oXV-ə dəyişmisiniz (əvvəl appaW9XYnzJNp4fpi idi). Əgər cədvəl ID-ləri (tbl...) yeni bazaya aid deyilsə, "Failed to fetch" və ya boş nəticə ala bilərsiniz — yeni bazada həmin table ID-lərinin düzgün olduğundan əmin olun.
+
+
+Invoice
+Code · HTML 
+indi de setr yoxdur yazisi geldi. demeli body doldura bilmeyib buna gore
+
+5:51 PM
+
+Teşhis etmek üçün alan adlarını otomatik algılamayı tasarladı
+Teşhis etmek üçün alan adlarını otomatik algılamayı tasarladı
+"Sətir yoxdur" o deməkdir ki, rows boşdur — yəni invoice-un Campaign sahəsi ya boş gəlir, ya da linklənmiş ID-lər CAMPAIGNS-də tapılmır. Bazanı dəyişdiyiniz üçün (appZtOpvO1geJ9oXV) həmin bazada sahə/cədvəl adları fərqli ola bilər.
+
+Kodu daha dözümlü edirəm — linklənmiş kampaniya sahəsini avtomatik tapsın, ad/məbləğ üçün bir neçə mümkün sahə adını yoxlasın, və konsola diaqnostika yazsın:
+
+
+Make campaign-link resolution and field reads robust, with console diagnostics when rows are empty
+Make campaign-link resolution and field reads robust, with console diagnostics when rows are empty
+Now add the resolveCampaignLinks helper:
+
+
+Edited a file, ran a command, read a file
+Edited a file, ran a command, read a file
+Kodu daha dözümlü etdim. İndi:
+
+Kampaniya sahəsini avtomatik tapır — Campaign, Campaigns, 📢 Campaigns adlarını yoxlayır, tapmasa invoice-dakı linklənmiş record massivini avtomatik aşkarlayır. Yeni bazada sahənin adı dəyişibsə belə işləməlidir.
+Ad/məbləğ/miqdar üçün ehtiyat sahə adları — Campaign Name/Name/Ad, Amount (AZN)/Amount/Məbləğ (AZN) və s.
+Diaqnostika — sətir gəlmirsə konsola (F12 → Console) yazır.
+Vacib addım: Səhifəni açın, F12 → Console baxın. Orada görəcəksiniz:
+
+Invoice sahələri: [...] — invoice-da hansı sahələr var
+Linklənmiş kampaniya dəyəri: [...] — Campaign sahəsi nə qaytarır
+Nümunə kampaniya sahələri: [...] — Campaigns cədvəlində hansı sütunlar var
+Bu üç sətri mənə göndərsəniz, dəqiq hansı adların istifadə olunduğunu deyə bilərəm.
+
+Bir ehtimal da var: appZtOpvO1geJ9oXV yeni bazadır, amma cədvəl ID-ləri (tbl...) köhnə bazadan qalıb. Əgər bazanı kopyalamısınızsa, kopyada cədvəl və record ID-ləri tamam yenidir — yəni tblGsNml3qIAA29pT köhnə bazaya aiddir və yeni bazadakı linklər heç vaxt uyğun gəlməyəcək. Bu halda yeni bazadakı düzgün tbl... ID-lərini götürüb CONFIG-də əvəz etməlisiniz. Köhnə bazaya (appaW9XYnzJNp4fpi) qayıtmaq istəyirsinizsə, onu da yoxlayın.
+
+
+Invoice
+Code · HTML 
+1782309338572_image.png
+tableler de beledi. 
+📄Invoices
+📢Campaigns
+
+5:56 PM
+
+Təhlil etdi, sahə adını düzəltdi, məbləğ məsələsini müəyyən etdi
+Təhlil etdi, sahə adını düzəltdi, məbləğ məsələsini müəyyən etdi
+İndi aydındır. Əsas problem sahə adında idi: invoice-da sahə "Campaigns" (cəm) adlanır, köhnə kod isə Campaign (tək) axtarırdı. Mənim son versiyamda resolveCampaignLinks artıq "Campaigns" adını da yoxlayır, ona görə ən son faylı deploy etsəniz, sətirlər görünməlidir.
+
+Bu skrinşotdan üç vacib məqam çıxır:
+
+Sahə adı "Campaigns" — düzəlişdə var, problem yox.
+Invoice Number formatı dəyişib — indi 2026-001 (əvvəl INV-2026-001 idi). Yəni linkdə də dəyişməlisiniz:
+...?number=2026-001 (köhnə INV-2026-001 artıq uyğun gəlməyəcək)
+Amount / Tax / Total invoice səviyyəsindədir — Invoices cədvəlində Amount (AZN)=1800, Tax amount (AZN)=270, Total Amount görünür. Bunlar yəqin kampaniyaların cəmidir (rollup). Hər sətrin öz məbləği isə 📢Campaigns cədvəlindədir.
+Mənə bir şey lazımdır ki, hər sətrin məbləğini dəqiq bağlayım: 📢Campaigns cədvəlinin sütunlarının skrinşotu (xüsusən kampaniyanın öz "Amount", "Tax", "Count" sütunlarının adları). Çünki hazırda kod bir neçə mümkün adı (Amount (AZN), Amount, Məbləğ (AZN) və s.) yoxlayır, amma sizin Campaigns cədvəlində ad fərqlidirsə, məbləğlər 0 görünə bilər.
+
+Qısa yol: ən son faylı deploy edin, ?number=2026-001 ilə açın, sonra:
+
+Adlar görünür, məbləğlər düzgündür → hər şey hazırdır.
+Adlar görünür, amma məbləğlər 0/səhvdir → 📢Campaigns sütunlarını göndərin (və ya F12 → Console-dakı "Nümunə kampaniya sahələri" sətrini), dəqiq bağlayım.
+Faylı yenidən təqdim edim ki, əlinizdə son versiya olsun:
+
+
+Presented file
+Presented file
+📢Campaigns cədvəlinin sütunlarını göndərsəniz, məbləğ/miqdar sahələrini dəqiq adlarla bağlayıb son versiyanı verərəm.
+
+
+Invoice
+Code · HTML 
+1782309572028_image.png
+1782309609990_image.png
+1782309626994_image.png
+1782309636458_image.png
+birinci sekil campaigns cedvelinin digerleri ise invoicedir
+
+6:00 PM
+
+Gözden geçirerek kampanya adı alanının potansiyel sorununu tespit ediyor
+Gözden geçirerek kampanya adı alanının potansiyel sorununu tespit ediyor
+Əla, indi tam mənzərə var. Hər iki cədvəlin sahə adlarını yoxladım — mənim son kodumdakı adlarla tam uyğun gəlir, ona görə ən son faylı deploy etsəniz işləməlidir. Təsdiqləyim:
+
+📢Campaigns cədvəli (kodun istifadə etdiyi sahələr):
+
+Ad → primary sahə "Campaign Name" ✓
+Amount (AZN) ✓
+Tax % ✓
+Tax amount (AZN) ✓
+Count ✓
+📄Invoices cədvəli:
+
+Campaigns (cəm) — linklənmiş sətirlər ✓ (kod bu adı yoxlayır)
+Amount (AZN), Tax amount (AZN), Total Amount (AZN) ✓
+Issue Date, Client VOEN, Contract ✓
+Kodun cari halı bunların hamısını düzgün oxuyur. Sürətli yoxlama üçün faylın açar hissəsinə baxım ki, son düzəlişlərin yerində olduğuna əmin olum:
+
+
+Təsdiqlədi məlumat xəritələməsini və yerləşdirmə təlimatlarını hazırladı
+Təsdiqlədi məlumat xəritələməsini və yerləşdirmə təlimatlarını hazırladı
+Hər şey yerindədir — bütün sahə adları sizin bazanızla uyğun gəlir. Kodda dəyişiklik lazım deyil.
+
+İndi etməli olduğunuz:
+
+Ən son invoice.html-i deploy edin (yuxarıdakı fayl — əvvəlki turda verdiyim versiya).
+Linkdə nömrəni yeni formata uyğunlaşdırın: ...?number=2026-001 (köhnə INV-2026-001 deyil).
+Bundan sonra sətirlər kampaniya adı, miqdar, qiymət və məbləğlə birlikdə görünməlidir.
+
+İki əlavə qeyd (istəsəniz bağlaya bilərəm, indi etmirəm):
+
+Endirim — Invoices cədvəlində Discount ? (%) sahəsi var. İstəsəniz yekun blokunda "Endirim X%" sətrini avtomatik göstərə bilərəm (yalnız dəyər 0-dan böyük olanda).
+Dinamik göndərən məlumatları — bazada (Hidden) Your address, (Hidden) Your bank, (Hidden) Your IBAN, (Hidden) SWIFT/BIC, (Hidden) Your company identification number (VÖEN), (Hidden) Your logo, (Hidden) Your Terms and Conditions kimi sahələr var. İstəsəniz statik SENDER blokunu bunlarla əvəz edə bilərəm ki, şirkət məlumatları da Airtable-dən gəlsin (statik dəyərlər fallback qalar).
+Deploy edib ?number=2026-001 ilə yoxlayın — sətirlər gəlsə, hazırdır. Gəlməsə, F12 → Console-dakı diaqnostika sətirlərini göndərin.
+
+1782309810826_image.png
+her sey gelir bunlar gelmir
+
+6:03 PM
+
+Teşhis etmek için konsol çıktısı talep etti
+Teşhis etmek için konsol çıktısı talep etti
+Cədvəl hələ boşdur — yəni Campaigns linkləri sətirlərə çevrilmir. Yekun (3 960) invoice-dan gəlir, amma sətirlər gəlmədiyi üçün Məbləğ/ƏDV 0 görünür.
+
+Səbəbi dəqiq görmək üçün konsol əvəzinə birbaşa səhifədə diaqnostika göstərən bir blok əlavə edirəm — sətir tapılmayanda hansı sahələrin gəldiyini, linklərin nə olduğunu və kampaniyaların yüklənib-yüklənmədiyini göstərəcək. Beləcə skrinşot göndərmək kifayətdir:
+
+
+When no rows resolve, render an on-page diagnostic panel so the data mismatch is visible without the console
+When no rows resolve, render an on-page diagnostic panel so the data mismatch is visible without the console
+
+
+Usage limit reached ∙ Resets 7:10 PM ∙ limits shared with Claude Code
+Keep working
+
+
+
+
+Claude is AI and can make mistakes. Please double-check responses.
+
+
+Invoice · HTML
 <!DOCTYPE html>
 <html lang="az">
 <head>
@@ -15,7 +738,7 @@
     font-family:"Times New Roman", Times, Georgia, serif;
     font-size:14px; line-height:1.5;
   }
-
+ 
   /* ---------- Toolbar (screen only) ---------- */
   .toolbar{
     position:sticky; top:0; z-index:10;
@@ -34,14 +757,14 @@
   }
   .toolbar button:hover{background:#1d4ed8;}
   .toolbar .status{font-size:12px; color:#9ca3af; margin-left:auto;}
-
+ 
   /* ---------- Page / paper ---------- */
   .sheet{padding:24px; display:flex; justify-content:center;}
   .page{
     width:var(--pagew); background:var(--paper);
     padding:18mm 16mm; box-shadow:0 1px 6px rgba(0,0,0,.15);
   }
-
+ 
   /* ---------- Logo ---------- */
   .logo-wrap{margin-bottom:22px;}
   .logo-wrap img{max-height:70px; max-width:320px; object-fit:contain;}
@@ -49,18 +772,18 @@
     font-size:26px; font-weight:700; color:var(--brand);
     font-style:italic; letter-spacing:.5px;
   }
-
+ 
   /* ---------- Sender / meta lines ---------- */
   .row{display:flex; gap:16px; margin:10px 0;}
   .row .lbl{min-width:170px; font-weight:700;}
-  .center-block{text-align:center; font-weight:700; line-height:1.4;}
-  .block{margin:10px 0;}
+  .sender-name{margin-left:329px; font-weight:700; line-height:1.4;}
+  .block{margin:23px 0;}
   .block b{font-weight:700;}
-
+ 
   .title{text-align:center; margin:26px 0 4px; font-size:20px; font-weight:700;}
   .subtitle{text-align:center; font-size:16px; font-weight:700; margin-bottom:18px;}
   .contract{font-weight:700; margin:14px 0 6px;}
-
+ 
   /* ---------- Line items (dark header kept, full borders added) ---------- */
   table.items{width:100%; border-collapse:collapse; margin-top:14px; font-size:13px;}
   table.items thead th{
@@ -71,7 +794,7 @@
   table.items tbody td{padding:8px 10px; border:1px solid var(--line);}
   table.items .num{text-align:right; white-space:nowrap;}
   table.items tbody tr:nth-child(even){background:#fafafa;}
-
+ 
   /* ---------- Totals (AZ style) ---------- */
   .totals{display:flex; justify-content:flex-end; margin-top:14px;}
   .totals table{border-collapse:collapse; min-width:300px;}
@@ -79,16 +802,16 @@
   .totals td.k{text-align:right; font-weight:700;}
   .totals td.v{text-align:right; font-weight:700; white-space:nowrap;}
   .totals tr.grand td{font-size:16px; padding-top:8px;}
-
+ 
   .summary{margin-top:16px; font-weight:700;}
   .summary .words{font-weight:700; margin-top:2px;}
-
+ 
   /* ---------- Signature ---------- */
-  .sign{margin-top:40px; padding-top:14px; border-top:1px solid #333;
+  .sign{margin-top:40px; padding-top:26px; border-top:1px solid #333;
         display:flex; justify-content:space-between; font-weight:700;}
-
+ 
   .empty{padding:60px; text-align:center; color:var(--muted); font-family:Arial,sans-serif;}
-
+ 
   /* ---------- Print ---------- */
   @page{ size:A4; margin:12mm; }
   @media print{
@@ -103,20 +826,20 @@
 </style>
 </head>
 <body>
-
+ 
   <div class="toolbar">
-    <label for="invSel">Hesab</label>
-    <select id="invSel"></select>
+    <!-- <label for="invSel">Hesab</label>
+    <select id="invSel"></select> -->
     <button id="printBtn">Çap / PDF</button>
     <span class="status" id="status">Yüklənir…</span>
   </div>
-
+ 
   <div class="sheet">
     <div class="page" id="page">
       <div class="empty">Hesab seçin…</div>
     </div>
   </div>
-
+ 
 <script>
 /* ============================================================
    CONFIG  —  TOKEN client-side saxlanılır, yalnız READ-ONLY
@@ -131,11 +854,10 @@ const CONFIG = {
   T_COMPANY:  "tblqR2FsfeuX6S8t5",
   CURRENCY:   "AZN"
 };
-
+ 
 /* ============================================================
    STATİK GÖNDƏRƏN MƏLUMATLARI  (hələ dinamik deyil — buradan dəyişin)
-   LOGO:  logo.png faylını invoice.html ilə eyni qovluğa (repo-ya) qoyun,
-          aşağıda LOGO = "logo.png" qalsın. Şəkil avtomatik görünəcək.
+   LOGO:  logo faylını invoice.html ilə eyni qovluğa (repo-ya) qoyun.
    ============================================================ */
 const SENDER = {
   LOGO: "newmedia_logo.svg",
@@ -146,12 +868,12 @@ const SENDER = {
   contractLine: "20 Fevral, 2025 tarixli, AZRC/2025/19 nömrəli müqaviləyə əsasən",
   director: "Sadıq Zadə Elxan Urmuz oğlu"
 };
-
+ 
 const API = `https://api.airtable.com/v0/${CONFIG.BASE}`;
 const H = { Authorization:`Bearer ${CONFIG.TOKEN}` };
 const $ = id => document.getElementById(id);
-const setStatus = m => $("status").textContent = m;
-
+const setStatus = m => { const el=$("status"); if(el) el.textContent = m; };
+ 
 async function apiGet(path){
   const r = await fetch(`${API}/${path}`, { headers:H });
   if(!r.ok) throw new Error(`${r.status} ${await r.text()}`);
@@ -174,7 +896,22 @@ async function fetchAllLabeled(label, tableId){
 const byId = recs => Object.fromEntries(recs.map(r=>[r.id, r.fields]));
 const first = v => Array.isArray(v) ? v[0] : v;
 const esc = s => String(s??"").replace(/[&<>]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;"}[c]));
-
+ 
+// Invoice-dakı linklənmiş kampaniya sahəsini tapır (ad bazadan-bazaya dəyişə bilər)
+function resolveCampaignLinks(f){
+  const named = ["Campaign","Campaigns","📢 Campaigns","Campaign Name","Items","Xidmətlər"];
+  for(const k of named){ if(f[k]!=null) return Array.isArray(f[k]) ? f[k] : [f[k]]; }
+  // avtomatik: linklənmiş record massivi olan ilk sahə (rec... id və ya {id})
+  for(const k of Object.keys(f)){
+    const v=f[k];
+    if(Array.isArray(v) && v.length){
+      const e=v[0];
+      if((e && typeof e==="object" && e.id) || (typeof e==="string" && e.startsWith("rec"))) return v;
+    }
+  }
+  return [];
+}
+ 
 /* ---------- AZ formatlama ---------- */
 const AZ_MONTHS=["Yanvar","Fevral","Mart","Aprel","May","İyun",
                  "İyul","Avqust","Sentyabr","Oktyabr","Noyabr","Dekabr"];
@@ -187,7 +924,7 @@ function fmtDateAz(s){
 function moneyAz(n){
   return Number(n||0).toLocaleString("az-AZ",{minimumFractionDigits:2,maximumFractionDigits:2});
 }
-
+ 
 /* ---------- Rəqəmi sözlə (AZ) ---------- */
 function azWords(n){
   const ones=["","bir","iki","üç","dörd","beş","altı","yeddi","səkkiz","doqquz"];
@@ -219,12 +956,12 @@ function amountInWords(total){
   w=w.charAt(0).toUpperCase()+w.slice(1);
   return `${w} AZN ${String(qepik).padStart(2,"0")}`;
 }
-
+ 
 let CAMPAIGNS={}, CLIENTS={}, COMPANIES={};
-
+ 
 async function init(){
   if(location.protocol==="file:"){
-    $("page").innerHTML=`<div class="empty">Bu səhifə birbaşa diskdən (file://) açılıb.<br>Brauzer bu rejimdə API sorğularını bloklayır — canlı GitHub Pages linkindən açın.</div>`;
+    const p=$("page"); if(p) p.innerHTML=`<div class="empty">Bu səhifə birbaşa diskdən (file://) açılıb.<br>Brauzer bu rejimdə API sorğularını bloklayır — canlı GitHub Pages linkindən açın.</div>`;
     setStatus("Bloklandı: file://"); return;
   }
   try{
@@ -236,109 +973,127 @@ async function init(){
       fetchAllLabeled("Company", CONFIG.T_COMPANY),
     ]);
     CAMPAIGNS=byId(camps); CLIENTS=byId(clients); COMPANIES=byId(comps);
-
-    const sel=$("invSel");
+ 
     invs.sort((a,b)=>String(b.fields["Invoice Number"]||"").localeCompare(String(a.fields["Invoice Number"]||"")));
-    sel.innerHTML=invs.map(r=>{
-      const f=r.fields, c=CLIENTS[first(f.Client)]?.["Client Name"]||"";
-      return `<option value="${r.id}">${esc(f["Invoice Number"]||r.id)} — ${esc(c)}</option>`;
-    }).join("");
-    sel.onchange=()=>{ const r=invs.find(x=>x.id===sel.value); render(r.fields); };
-
+ 
+    // Dropdown opsionaldir — toolbar-da #invSel varsa doldurulur, yoxdursa ötürülür
+    const sel=$("invSel");
+    if(sel){
+      sel.innerHTML=invs.map(r=>{
+        const f=r.fields, c=CLIENTS[first(f.Client)]?.["Client Name"]||"";
+        return `<option value="${r.id}">${esc(f["Invoice Number"]||r.id)} — ${esc(c)}</option>`;
+      }).join("");
+      sel.onchange=()=>{ const r=invs.find(x=>x.id===sel.value); if(r) render(r.fields); };
+    }
+ 
     const qs=new URLSearchParams(location.search);
     const wantedNumber=qs.get("number");
     const wantedId=qs.get("id");
     let start=null;
     if(wantedNumber){
       start=invs.find(r=>String(r.fields["Invoice Number"]||"").trim().toLowerCase()===wantedNumber.trim().toLowerCase());
-      if(!start){ $("page").innerHTML=`<div class="empty">Hesab tapılmadı: <b>${esc(wantedNumber)}</b></div>`; setStatus("Tapılmadı"); return; }
+      if(!start){ const p=$("page"); if(p) p.innerHTML=`<div class="empty">Hesab tapılmadı: <b>${esc(wantedNumber)}</b></div>`; setStatus("Tapılmadı"); return; }
     } else if(wantedId){
       start=invs.find(r=>r.id===wantedId);
     }
     if(!start) start=invs[0];
-    if(!start){ $("page").innerHTML=`<div class="empty">Heç bir hesab tapılmadı.</div>`; setStatus(""); return; }
-    sel.value=start.id;
+    if(!start){ const p=$("page"); if(p) p.innerHTML=`<div class="empty">Heç bir hesab tapılmadı.</div>`; setStatus(""); return; }
+    if(sel) sel.value=start.id;
     render(start.fields);
     setStatus(`${invs.length} hesab yükləndi`);
   }catch(e){
     setStatus("Xəta");
-    $("page").innerHTML=`<div class="empty">Yüklənmə alınmadı.<br><small>${esc(e.message)}</small></div>`;
+    const p=$("page"); if(p) p.innerHTML=`<div class="empty">Yüklənmə alınmadı.<br><small>${esc(e.message)}</small></div>`;
     console.error(e);
   }
 }
-
+ 
 function render(f){
+  const page=$("page");
+  if(!page) return;
   const client = CLIENTS[first(f.Client)] || {};
-
+ 
   const company = COMPANIES[first(f["Your company"])] || {};
   const airtableLogo = first(company["Your logo"])?.url || first(f["(Hidden) Your logo"])?.url || "";
   const logoSrc = SENDER.LOGO || airtableLogo;
-
-  const ids = f.Campaign || [];
-  const rows = ids.map(id=>CAMPAIGNS[id]).filter(Boolean);
+ 
+  // --- linklənmiş kampaniyaları tap (sahə adı bazadan-bazaya dəyişə bilər) ---
+  const linkVals = resolveCampaignLinks(f);
+  const rows = linkVals.map(l=>{
+    const id = (l && typeof l==="object") ? l.id : l;
+    return CAMPAIGNS[id] || ((l && typeof l==="object" && (l.name||l.value)) ? l : null);
+  }).filter(Boolean);
+ 
+  // diaqnostika: sətir gəlmirsə konsolda sahə adlarını göstər
+  if(rows.length===0){
+    console.warn("Sətir tapılmadı. Invoice sahələri:", Object.keys(f));
+    console.warn("Linklənmiş kampaniya dəyəri:", linkVals);
+    const sampleId = Object.keys(CAMPAIGNS)[0];
+    console.warn("Nümunə kampaniya sahələri:", sampleId ? Object.keys(CAMPAIGNS[sampleId]) : "(CAMPAIGNS boşdur)");
+  }
+ 
   let subTotal=0, taxTotal=0;
   const body = rows.map((c,i)=>{
-    const amt=Number(c["Amount (AZN)"]||0), tax=Number(c["Tax amount (AZN)"]||0),
-          tot=Number(c["Total Amount (AZN)"]||amt+tax), cnt=c["Count"]??1;
+    const name = c["Campaign Name"] || c["Name"] || c["Ad"] || c.name || "";
+    const amt = Number(c["Amount (AZN)"] ?? c["Amount"] ?? c["Məbləğ (AZN)"] ?? c["Qiymət (AZN)"] ?? 0);
+    const tax = Number(c["Tax amount (AZN)"] ?? c["Tax Amount (AZN)"] ?? c["ƏDV məbləği (AZN)"] ?? 0);
+    const cnt = c["Count"] ?? c["Miqdar"] ?? 1;
+    const tot = amt;   // YEKUN/MƏBLƏĞ = yalnız amt (ƏDV-siz)
     subTotal+=amt; taxTotal+=tax;
     return `<tr>
       <td class="num">${i+1}</td>
-      <td>${esc(c["Campaign Name"]||"")}</td>
+      <td>${esc(name)}</td>
       <td class="num">${esc(cnt)}</td>
       <td class="num">${moneyAz(amt)}</td>
-      <td class="num">${esc(c["Tax %"]??"")}%</td>
-      <td class="num">${moneyAz(tax)}</td>
       <td class="num">${moneyAz(tot)}</td>
     </tr>`;
   }).join("");
   const grand = Number(f["Total Amount (AZN)"] ?? (subTotal+taxTotal));
-
+ 
   const cur = CONFIG.CURRENCY;
   const hesabNo = f["Hesab №"] || f["Invoice Number"] || "";
-
+ 
   const payerName = client["Client Name"] || "";
   const payerVoen = client["Client VOEN"] || "";
-
-  $("page").innerHTML = `
+ 
+  page.innerHTML = `
     <div class="logo-wrap">
       ${logoSrc
         ? `<img src="${esc(logoSrc)}" alt="${esc(SENDER.name)}" onerror="this.replaceWith(Object.assign(document.createElement('div'),{className:'logo-fallback',textContent:${JSON.stringify(SENDER.name)}}))">`
         : `<div class="logo-fallback">${esc(SENDER.name)}</div>`}
     </div>
-
+ 
     <div class="row">
       <div class="lbl">Mal / Xidmət göndərən:</div>
-      <div class="center-block" style="text-align:left">
+      <div class="sender-name">
         ${esc(SENDER.name)}<br>VÖEN ${esc(SENDER.voen)}
       </div>
     </div>
-
+ 
     <div class="block"><b>Ünvan:</b> ${esc(SENDER.address)}</div>
-
+ 
     <div class="block"><b>Mal göndərənin rekvizitləri:</b> ${esc(SENDER.bankReqs)}</div>
-
+ 
     <div class="block"><b>Ödəyən müştəri:</b> ${esc(payerName)}${payerVoen?` , VÖEN: ${esc(payerVoen)}`:``}</div>
-
+ 
     <div class="title">HESAB № ${esc(hesabNo)}</div>
     <div class="subtitle">${fmtDateAz(f["Issue Date"])}</div>
-
+ 
     <div class="contract">${esc(SENDER.contractLine)}</div>
-
+ 
     <table class="items">
       <thead>
         <tr>
           <th class="num">№</th>
-          <th>MALLARIN (XİDMƏTLƏRİN) ADI</th>
+          <th>XİDMƏTLƏRİN ADI</th>
           <th class="num">MİQDAR</th>
+          <th class="num">QİYMƏT (${cur})</th>
           <th class="num">MƏBLƏĞ (${cur})</th>
-          <th class="num">ƏDV %</th>
-          <th class="num">ƏDV MƏBLƏĞİ (${cur})</th>
-          <th class="num">YEKUN (${cur})</th>
         </tr>
       </thead>
-      <tbody>${body || `<tr><td colspan="7" style="text-align:center;color:#9ca3af;padding:24px">Sətir yoxdur</td></tr>`}</tbody>
+      <tbody>${body || `<tr><td colspan="5" style="text-align:center;color:#9ca3af;padding:24px">Sətir yoxdur</td></tr>`}</tbody>
     </table>
-
+ 
     <div class="totals">
       <table>
         <tr><td class="k">Məbləğ:</td><td class="v">${moneyAz(subTotal)} ${cur}</td></tr>
@@ -346,21 +1101,29 @@ function render(f){
         <tr class="grand"><td class="k">Yekun:</td><td class="v">${moneyAz(grand)} ${cur}</td></tr>
       </table>
     </div>
-
+ 
     <div class="summary">
       <div>Cəmi ${rows.length} sətir, məbləğ ${moneyAz(grand)} ${cur}</div>
       <div class="words">Yazı ilə: ${esc(amountInWords(grand))}</div>
     </div>
-
+ 
     <div class="sign">
       <div>Direktor</div>
       <div>${esc(SENDER.director)}</div>
     </div>
   `;
 }
-
-$("printBtn").onclick = ()=>window.print();
-init();
+ 
+function start(){
+  const btn = $("printBtn");
+  if(btn) btn.onclick = ()=>window.print();
+  init();
+}
+if(document.readyState === "loading"){
+  document.addEventListener("DOMContentLoaded", start);
+}else{
+  start();
+}
 </script>
 </body>
 </html>
