@@ -149,7 +149,7 @@ const SENDER = {
 const API = `https://api.airtable.com/v0/${CONFIG.BASE}`;
 const H = { Authorization:`Bearer ${CONFIG.TOKEN}` };
 const $ = id => document.getElementById(id);
-const setStatus = m => $("status").textContent = m;
+const setStatus = m => { const el=$("status"); if(el) el.textContent = m; };
 
 async function apiGet(path){
   const r = await fetch(`${API}/${path}`, { headers:H });
@@ -223,7 +223,7 @@ let CAMPAIGNS={}, CLIENTS={}, COMPANIES={};
 
 async function init(){
   if(location.protocol==="file:"){
-    $("page").innerHTML=`<div class="empty">Bu səhifə birbaşa diskdən (file://) açılıb.<br>Brauzer bu rejimdə API sorğularını bloklayır — canlı GitHub Pages linkindən açın.</div>`;
+    const p=$("page"); if(p) p.innerHTML=`<div class="empty">Bu səhifə birbaşa diskdən (file://) açılıb.<br>Brauzer bu rejimdə API sorğularını bloklayır — canlı GitHub Pages linkindən açın.</div>`;
     setStatus("Bloklandı: file://"); return;
   }
   try{
@@ -236,13 +236,17 @@ async function init(){
     ]);
     CAMPAIGNS=byId(camps); CLIENTS=byId(clients); COMPANIES=byId(comps);
 
-    const sel=$("invSel");
     invs.sort((a,b)=>String(b.fields["Invoice Number"]||"").localeCompare(String(a.fields["Invoice Number"]||"")));
-    sel.innerHTML=invs.map(r=>{
-      const f=r.fields, c=CLIENTS[first(f.Client)]?.["Client Name"]||"";
-      return `<option value="${r.id}">${esc(f["Invoice Number"]||r.id)} — ${esc(c)}</option>`;
-    }).join("");
-    sel.onchange=()=>{ const r=invs.find(x=>x.id===sel.value); render(r.fields); };
+
+    // Dropdown opsionaldir — toolbar-da #invSel varsa doldurulur, yoxdursa ötürülür
+    const sel=$("invSel");
+    if(sel){
+      sel.innerHTML=invs.map(r=>{
+        const f=r.fields, c=CLIENTS[first(f.Client)]?.["Client Name"]||"";
+        return `<option value="${r.id}">${esc(f["Invoice Number"]||r.id)} — ${esc(c)}</option>`;
+      }).join("");
+      sel.onchange=()=>{ const r=invs.find(x=>x.id===sel.value); if(r) render(r.fields); };
+    }
 
     const qs=new URLSearchParams(location.search);
     const wantedNumber=qs.get("number");
@@ -250,23 +254,25 @@ async function init(){
     let start=null;
     if(wantedNumber){
       start=invs.find(r=>String(r.fields["Invoice Number"]||"").trim().toLowerCase()===wantedNumber.trim().toLowerCase());
-      if(!start){ $("page").innerHTML=`<div class="empty">Hesab tapılmadı: <b>${esc(wantedNumber)}</b></div>`; setStatus("Tapılmadı"); return; }
+      if(!start){ const p=$("page"); if(p) p.innerHTML=`<div class="empty">Hesab tapılmadı: <b>${esc(wantedNumber)}</b></div>`; setStatus("Tapılmadı"); return; }
     } else if(wantedId){
       start=invs.find(r=>r.id===wantedId);
     }
     if(!start) start=invs[0];
-    if(!start){ $("page").innerHTML=`<div class="empty">Heç bir hesab tapılmadı.</div>`; setStatus(""); return; }
-    sel.value=start.id;
+    if(!start){ const p=$("page"); if(p) p.innerHTML=`<div class="empty">Heç bir hesab tapılmadı.</div>`; setStatus(""); return; }
+    if(sel) sel.value=start.id;
     render(start.fields);
     setStatus(`${invs.length} hesab yükləndi`);
   }catch(e){
     setStatus("Xəta");
-    $("page").innerHTML=`<div class="empty">Yüklənmə alınmadı.<br><small>${esc(e.message)}</small></div>`;
+    const p=$("page"); if(p) p.innerHTML=`<div class="empty">Yüklənmə alınmadı.<br><small>${esc(e.message)}</small></div>`;
     console.error(e);
   }
 }
 
 function render(f){
+  const page=$("page");
+  if(!page) return;
   const client = CLIENTS[first(f.Client)] || {};
 
   const company = COMPANIES[first(f["Your company"])] || {};
@@ -278,8 +284,7 @@ function render(f){
   let subTotal=0, taxTotal=0;
   const body = rows.map((c,i)=>{
     const amt=Number(c["Amount (AZN)"]||0), tax=Number(c["Tax amount (AZN)"]||0),
-          //tot=Number(c["Total Amount (AZN)"]||amt+tax), cnt=c["Count"]??1;
-          tot=amt, cnt=c["Count"]??1;
+          tot=amt, cnt=c["Count"]??1;   // YEKUN/MƏBLƏĞ = yalnız amt (ƏDV-siz)
     subTotal+=amt; taxTotal+=tax;
     return `<tr>
       <td class="num">${i+1}</td>
@@ -297,7 +302,7 @@ function render(f){
   const payerName = client["Client Name"] || "";
   const payerVoen = client["Client VOEN"] || "";
 
-  $("page").innerHTML = `
+  page.innerHTML = `
     <div class="logo-wrap">
       ${logoSrc
         ? `<img src="${esc(logoSrc)}" alt="${esc(SENDER.name)}" onerror="this.replaceWith(Object.assign(document.createElement('div'),{className:'logo-fallback',textContent:${JSON.stringify(SENDER.name)}}))">`
@@ -355,8 +360,16 @@ function render(f){
   `;
 }
 
-$("printBtn").onclick = ()=>window.print();
-init();
+function start(){
+  const btn = $("printBtn");
+  if(btn) btn.onclick = ()=>window.print();
+  init();
+}
+if(document.readyState === "loading"){
+  document.addEventListener("DOMContentLoaded", start);
+}else{
+  start();
+}
 </script>
 </body>
 </html>
