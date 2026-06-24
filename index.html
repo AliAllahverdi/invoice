@@ -113,7 +113,7 @@
 
   <div class="sheet">
     <div class="page" id="page">
-      <div class="empty">Hesab seçin…</div>
+      <div class="empty">Yüklənir…</div>
     </div>
   </div>
 
@@ -277,7 +277,7 @@ async function init(){
     if(!start){ const p=$("page"); if(p) p.innerHTML=`<div class="empty">Heç bir hesab tapılmadı.</div>`; setStatus(""); return; }
     if(sel) sel.value=start.id;
     render(start.fields);
-    setStatus(`${invs.length} hesab yükləndi`);
+    //setStatus(`${invs.length} hesab yükləndi`);
   }catch(e){
     setStatus("Xəta");
     const p=$("page"); if(p) p.innerHTML=`<div class="empty">Yüklənmə alınmadı.<br><small>${esc(e.message)}</small></div>`;
