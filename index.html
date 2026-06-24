@@ -1,22 +1,21 @@
 <!DOCTYPE html>
-<html lang="en">
 
+<html lang="en">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-
 <title>Invoice</title>
 
 <style>
 
 *{
-    box-sizing:border-box;
     margin:0;
     padding:0;
+    box-sizing:border-box;
 }
 
 body{
-    font-family:Arial, Helvetica, sans-serif;
+    font-family:Arial, sans-serif;
     background:#f5f7fa;
     padding:40px;
     color:#222;
@@ -26,9 +25,9 @@ body{
     max-width:1100px;
     margin:auto;
     background:#fff;
-    padding:50px;
     border-radius:12px;
     box-shadow:0 5px 20px rgba(0,0,0,.08);
+    padding:50px;
 }
 
 .header{
@@ -59,19 +58,19 @@ body{
 .section{
     display:flex;
     justify-content:space-between;
+    gap:40px;
     margin-bottom:40px;
 }
 
 .card{
-    width:48%;
+    flex:1;
 }
 
 .card h3{
-    margin-bottom:10px;
-    color:#666;
     font-size:14px;
     text-transform:uppercase;
-    letter-spacing:1px;
+    color:#777;
+    margin-bottom:10px;
 }
 
 .card p{
@@ -85,13 +84,12 @@ table{
 }
 
 thead{
-    background:#f2f2f2;
+    background:#f3f3f3;
 }
 
 th{
     text-align:left;
     padding:14px;
-    font-size:14px;
 }
 
 td{
@@ -104,9 +102,9 @@ td{
 }
 
 .summary{
-    margin-top:40px;
     display:flex;
     justify-content:flex-end;
+    margin-top:40px;
 }
 
 .summary-box{
@@ -129,26 +127,21 @@ td{
 
 .footer{
     margin-top:60px;
-    font-size:12px;
-    color:#888;
     text-align:center;
+    color:#999;
+    font-size:12px;
 }
 
 .print-btn{
     position:fixed;
     top:20px;
     right:20px;
-    background:#111;
-    color:white;
     border:none;
-    padding:12px 20px;
+    background:#111;
+    color:#fff;
+    padding:12px 18px;
     border-radius:8px;
     cursor:pointer;
-    z-index:999;
-}
-
-.print-btn:hover{
-    background:#333;
 }
 
 .loading{
@@ -184,12 +177,13 @@ td{
 }
 
 </style>
+
 </head>
 
 <body>
 
 <button class="print-btn" onclick="window.print()">
-🖨 Print
+Print Invoice
 </button>
 
 <div id="loading" class="loading">
@@ -198,121 +192,114 @@ Loading invoice...
 
 <div id="invoice" class="invoice" style="display:none;">
 
-    <div class="header">
+```
+<div class="header">
 
-        <div>
-            <div class="logo">
-                COLIBRI
-            </div>
+    <div>
+        <div class="logo">
+            COLIBRI
+        </div>
+    </div>
+
+    <div class="invoice-title">
+        <h1>INVOICE</h1>
+        <div id="invoiceNumber" class="invoice-number"></div>
+    </div>
+
+</div>
+
+<div class="section">
+
+    <div class="card">
+
+        <h3>Bill To</h3>
+
+        <p id="clientName"></p>
+        <p id="clientVoen"></p>
+
+    </div>
+
+    <div class="card">
+
+        <h3>Invoice Details</h3>
+
+        <p>
+            <b>Issue Date:</b>
+            <span id="issueDate"></span>
+        </p>
+
+        <p>
+            <b>Due Date:</b>
+            <span id="dueDate"></span>
+        </p>
+
+    </div>
+
+</div>
+
+<table>
+
+    <thead>
+
+        <tr>
+            <th>Campaign</th>
+            <th>Description</th>
+            <th class="amount">Amount</th>
+        </tr>
+
+    </thead>
+
+    <tbody id="campaignRows"></tbody>
+
+</table>
+
+<div class="summary">
+
+    <div class="summary-box">
+
+        <div class="summary-row">
+            <span>Subtotal</span>
+            <span id="subtotal"></span>
         </div>
 
-        <div class="invoice-title">
-            <h1>INVOICE</h1>
+        <div class="summary-row">
+            <span>Tax</span>
+            <span id="tax"></span>
+        </div>
 
-            <div class="invoice-number" id="invoiceNumber">
-                INV-0001
-            </div>
+        <div class="summary-row total-row">
+            <span>Total</span>
+            <span id="total"></span>
         </div>
 
     </div>
 
-    <div class="section">
+</div>
 
-        <div class="card">
-
-            <h3>Bill To</h3>
-
-            <p id="clientName"></p>
-            <p id="clientVoen"></p>
-
-        </div>
-
-        <div class="card">
-
-            <h3>Invoice Details</h3>
-
-            <p>
-                <b>Issue Date:</b>
-                <span id="issueDate"></span>
-            </p>
-
-            <p>
-                <b>Due Date:</b>
-                <span id="dueDate"></span>
-            </p>
-
-        </div>
-
-    </div>
-
-    <table>
-
-        <thead>
-
-            <tr>
-                <th>Campaign</th>
-                <th>Description</th>
-                <th class="amount">Amount</th>
-            </tr>
-
-        </thead>
-
-        <tbody id="campaignRows">
-
-        </tbody>
-
-    </table>
-
-    <div class="summary">
-
-        <div class="summary-box">
-
-            <div class="summary-row">
-                <span>Subtotal</span>
-                <span id="subtotal"></span>
-            </div>
-
-            <div class="summary-row">
-                <span>Tax</span>
-                <span id="tax"></span>
-            </div>
-
-            <div class="summary-row total-row">
-                <span>Total</span>
-                <span id="total"></span>
-            </div>
-
-        </div>
-
-    </div>
-
-    <div class="footer">
-
-        Generated automatically from Airtable
-
-    </div>
+<div class="footer">
+    Generated from Airtable
+</div>
+```
 
 </div>
 
 <script>
 
 /*
---------------------------------------------------
-URL:
-?id=recXXXX
---------------------------------------------------
+URL nümunəsi:
+
+https://aliallahverdi.github.io/invoice/?id=rec123
 */
 
 const params = new URLSearchParams(window.location.search);
+
 const invoiceId = params.get("id");
 
 console.log("Invoice ID:", invoiceId);
 
 /*
---------------------------------------------------
-MOCK DATA
-BURANI SONRA AIRTABLE API ILE DEYISECEYIK
---------------------------------------------------
+BU HISSƏ SONRA AIRTABLE API OLACAQ
+İNDİLİK TEST DATA
 */
 
 const invoice = {
@@ -328,17 +315,17 @@ const invoice = {
     campaigns:[
         {
             name:"PASHA Google Search",
-            description:"Google Ads Campaign",
+            description:"Google Search Campaign",
             amount:"500 AZN"
         },
         {
             name:"PASHA Youtube Bumper",
-            description:"YouTube Video Ads",
+            description:"Youtube Ads",
             amount:"300 AZN"
         },
         {
             name:"Bravo Endirim Meta",
-            description:"Meta Ads",
+            description:"Meta Campaign",
             amount:"200 AZN"
         },
         {
@@ -349,35 +336,29 @@ const invoice = {
     ]
 };
 
-/*
---------------------------------------------------
-RENDER
---------------------------------------------------
-*/
+document.getElementById("invoiceNumber").innerText =
+    invoice.number;
 
-document.getElementById("invoiceNumber")
-    .innerText = invoice.number;
+document.getElementById("clientName").innerText =
+    invoice.client;
 
-document.getElementById("clientName")
-    .innerText = invoice.client;
+document.getElementById("clientVoen").innerText =
+    invoice.voen;
 
-document.getElementById("clientVoen")
-    .innerText = invoice.voen;
+document.getElementById("issueDate").innerText =
+    invoice.issueDate;
 
-document.getElementById("issueDate")
-    .innerText = invoice.issueDate;
+document.getElementById("dueDate").innerText =
+    invoice.dueDate;
 
-document.getElementById("dueDate")
-    .innerText = invoice.dueDate;
+document.getElementById("subtotal").innerText =
+    invoice.subtotal;
 
-document.getElementById("subtotal")
-    .innerText = invoice.subtotal;
+document.getElementById("tax").innerText =
+    invoice.tax;
 
-document.getElementById("tax")
-    .innerText = invoice.tax;
-
-document.getElementById("total")
-    .innerText = invoice.total;
+document.getElementById("total").innerText =
+    invoice.total;
 
 const tbody =
     document.getElementById("campaignRows");
@@ -394,11 +375,11 @@ invoice.campaigns.forEach(campaign => {
 
 });
 
-document.getElementById("loading")
-    .style.display = "none";
+document.getElementById("loading").style.display =
+    "none";
 
-document.getElementById("invoice")
-    .style.display = "block";
+document.getElementById("invoice").style.display =
+    "block";
 
 </script>
 
