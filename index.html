@@ -1,80 +1,34 @@
 <!DOCTYPE html>
-
 <html lang="en">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Invoice</title>
+
+<title>Invoice Viewer</title>
 
 <style>
 
-*{
-    margin:0;
-    padding:0;
-    box-sizing:border-box;
-}
-
 body{
-    font-family:Arial, sans-serif;
-    background:#f5f7fa;
-    padding:40px;
-    color:#222;
+    font-family: Arial;
+    background:#f5f6f8;
+    padding:30px;
 }
 
 .invoice{
-    max-width:1100px;
+    max-width:1000px;
     margin:auto;
-    background:#fff;
-    border-radius:12px;
-    box-shadow:0 5px 20px rgba(0,0,0,.08);
-    padding:50px;
+    background:white;
+    padding:40px;
+    border-radius:10px;
 }
 
 .header{
     display:flex;
     justify-content:space-between;
-    align-items:flex-start;
-    margin-bottom:50px;
 }
 
-.logo{
-    font-size:34px;
-    font-weight:700;
-}
-
-.invoice-title{
-    text-align:right;
-}
-
-.invoice-title h1{
-    font-size:42px;
-    margin-bottom:10px;
-}
-
-.invoice-number{
-    color:#666;
-}
-
-.section{
-    display:flex;
-    justify-content:space-between;
-    gap:40px;
-    margin-bottom:40px;
-}
-
-.card{
-    flex:1;
-}
-
-.card h3{
-    font-size:14px;
-    text-transform:uppercase;
-    color:#777;
-    margin-bottom:10px;
-}
-
-.card p{
-    margin-bottom:6px;
+h1{
+    margin:0;
 }
 
 table{
@@ -83,97 +37,32 @@ table{
     margin-top:20px;
 }
 
-thead{
-    background:#f3f3f3;
+th,td{
+    border:1px solid #ddd;
+    padding:10px;
 }
 
 th{
-    text-align:left;
-    padding:14px;
+    background:#eee;
 }
 
-td{
-    padding:14px;
-    border-bottom:1px solid #eee;
-}
-
-.amount{
+.total{
     text-align:right;
-}
-
-.summary{
-    display:flex;
-    justify-content:flex-end;
-    margin-top:40px;
-}
-
-.summary-box{
-    width:320px;
-}
-
-.summary-row{
-    display:flex;
-    justify-content:space-between;
-    padding:10px 0;
-}
-
-.total-row{
-    border-top:2px solid #000;
-    margin-top:10px;
-    padding-top:15px;
-    font-size:22px;
+    margin-top:20px;
+    font-size:20px;
     font-weight:bold;
-}
-
-.footer{
-    margin-top:60px;
-    text-align:center;
-    color:#999;
-    font-size:12px;
-}
-
-.print-btn{
-    position:fixed;
-    top:20px;
-    right:20px;
-    border:none;
-    background:#111;
-    color:#fff;
-    padding:12px 18px;
-    border-radius:8px;
-    cursor:pointer;
 }
 
 .loading{
     text-align:center;
     margin-top:100px;
-    font-size:20px;
 }
 
-@page{
-    size:A4;
-    margin:15mm;
-}
-
-@media print{
-
-    body{
-        background:white;
-        padding:0;
-    }
-
-    .invoice{
-        box-shadow:none;
-        border-radius:0;
-        max-width:none;
-        width:100%;
-        padding:0;
-    }
-
-    .print-btn{
-        display:none;
-    }
-
+button{
+    position:fixed;
+    top:20px;
+    right:20px;
+    padding:10px 15px;
 }
 
 </style>
@@ -182,204 +71,110 @@ td{
 
 <body>
 
-<button class="print-btn" onclick="window.print()">
-Print Invoice
-</button>
+<button onclick="window.print()">Print</button>
 
-<div id="loading" class="loading">
-Loading invoice...
-</div>
+<div id="loading">Loading invoice...</div>
 
-<div id="invoice" class="invoice" style="display:none;">
+<div class="invoice" id="invoice" style="display:none;">
 
-```
-<div class="header">
-
-    <div>
-        <div class="logo">
-            COLIBRI
-        </div>
-    </div>
-
-    <div class="invoice-title">
+    <div class="header">
         <h1>INVOICE</h1>
-        <div id="invoiceNumber" class="invoice-number"></div>
+        <div id="invoiceNumber"></div>
     </div>
 
-</div>
+    <p><b>Client:</b> <span id="client"></span></p>
+    <p><b>Issue Date:</b> <span id="issue"></span></p>
+    <p><b>Due Date:</b> <span id="due"></span></p>
 
-<div class="section">
+    <table>
+        <thead>
+            <tr>
+                <th>Campaign</th>
+                <th>Amount</th>
+            </tr>
+        </thead>
+        <tbody id="rows"></tbody>
+    </table>
 
-    <div class="card">
-
-        <h3>Bill To</h3>
-
-        <p id="clientName"></p>
-        <p id="clientVoen"></p>
-
+    <div class="total">
+        Total: <span id="total"></span>
     </div>
-
-    <div class="card">
-
-        <h3>Invoice Details</h3>
-
-        <p>
-            <b>Issue Date:</b>
-            <span id="issueDate"></span>
-        </p>
-
-        <p>
-            <b>Due Date:</b>
-            <span id="dueDate"></span>
-        </p>
-
-    </div>
-
-</div>
-
-<table>
-
-    <thead>
-
-        <tr>
-            <th>Campaign</th>
-            <th>Description</th>
-            <th class="amount">Amount</th>
-        </tr>
-
-    </thead>
-
-    <tbody id="campaignRows"></tbody>
-
-</table>
-
-<div class="summary">
-
-    <div class="summary-box">
-
-        <div class="summary-row">
-            <span>Subtotal</span>
-            <span id="subtotal"></span>
-        </div>
-
-        <div class="summary-row">
-            <span>Tax</span>
-            <span id="tax"></span>
-        </div>
-
-        <div class="summary-row total-row">
-            <span>Total</span>
-            <span id="total"></span>
-        </div>
-
-    </div>
-
-</div>
-
-<div class="footer">
-    Generated from Airtable
-</div>
-```
 
 </div>
 
 <script>
 
-/*
-URL nümunəsi:
+/* =========================
+   CONFIG
+========================= */
 
-https://aliallahverdi.github.io/invoice/?id=rec123
-*/
+const AIRTABLE_TOKEN = "patBXfNSVLkFxR8Wo.d001fc9127510cd55ac6c25e8bc144351a09e61049c2f22757f7479eeb2f6ba6"; // ⚠️ sonra siləcəyik
+const BASE_ID = "appaW9XYnzJNp4fpi";
+const TABLE = "📄 Invoices";
+
+/* =========================
+   URL PARAM
+========================= */
 
 const params = new URLSearchParams(window.location.search);
-
 const invoiceId = params.get("id");
 
-console.log("Invoice ID:", invoiceId);
+/* =========================
+   FETCH INVOICE
+========================= */
 
-/*
-BU HISSƏ SONRA AIRTABLE API OLACAQ
-İNDİLİK TEST DATA
-*/
+async function loadInvoice(){
 
-const invoice = {
-    number:"INV-2026-001",
-    client:"PASHA Bank",
-    voen:"1234567890",
-    issueDate:"23 Jun 2026",
-    dueDate:"30 Jun 2026",
-    subtotal:"1000 AZN",
-    tax:"110 AZN",
-    total:"1110 AZN",
+    const url = `https://api.airtable.com/v0/${BASE_ID}/${encodeURIComponent(TABLE)}/${invoiceId}`;
 
-    campaigns:[
-        {
-            name:"PASHA Google Search",
-            description:"Google Search Campaign",
-            amount:"500 AZN"
-        },
-        {
-            name:"PASHA Youtube Bumper",
-            description:"Youtube Ads",
-            amount:"300 AZN"
-        },
-        {
-            name:"Bravo Endirim Meta",
-            description:"Meta Campaign",
-            amount:"200 AZN"
-        },
-        {
-            name:"Citynet TikTok",
-            description:"TikTok Campaign",
-            amount:"110 AZN"
+    const res = await fetch(url, {
+        headers: {
+            Authorization: `Bearer ${AIRTABLE_TOKEN}`
         }
-    ]
-};
+    });
 
-document.getElementById("invoiceNumber").innerText =
-    invoice.number;
+    const data = await res.json();
 
-document.getElementById("clientName").innerText =
-    invoice.client;
+    const fields = data.fields;
 
-document.getElementById("clientVoen").innerText =
-    invoice.voen;
+    render(fields);
+}
 
-document.getElementById("issueDate").innerText =
-    invoice.issueDate;
+/* =========================
+   RENDER
+========================= */
 
-document.getElementById("dueDate").innerText =
-    invoice.dueDate;
+function render(fields){
 
-document.getElementById("subtotal").innerText =
-    invoice.subtotal;
+    document.getElementById("invoiceNumber").innerText = fields["Invoice Number"];
+    document.getElementById("client").innerText = fields["Client"];
+    document.getElementById("issue").innerText = fields["Issue Date"];
+    document.getElementById("due").innerText = fields["Due Date"];
+    document.getElementById("total").innerText = fields["Total Amount (AZN)"];
 
-document.getElementById("tax").innerText =
-    invoice.tax;
+    const campaigns = fields["Campaign"] || [];
 
-document.getElementById("total").innerText =
-    invoice.total;
+    const tbody = document.getElementById("rows");
 
-const tbody =
-    document.getElementById("campaignRows");
+    campaigns.forEach(c => {
 
-invoice.campaigns.forEach(campaign => {
+        tbody.innerHTML += `
+            <tr>
+                <td>${c}</td>
+                <td>-</td>
+            </tr>
+        `;
+    });
 
-    tbody.innerHTML += `
-        <tr>
-            <td>${campaign.name}</td>
-            <td>${campaign.description}</td>
-            <td class="amount">${campaign.amount}</td>
-        </tr>
-    `;
+    document.getElementById("loading").style.display = "none";
+    document.getElementById("invoice").style.display = "block";
+}
 
-});
+/* =========================
+   INIT
+========================= */
 
-document.getElementById("loading").style.display =
-    "none";
-
-document.getElementById("invoice").style.display =
-    "block";
+loadInvoice();
 
 </script>
 
